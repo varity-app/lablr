@@ -1,0 +1,24 @@
+name: Test Python
+
+on:
+  push:
+
+jobs:
+  test-python:
+    name: Test and Lint Python
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install install pylint pytest
+        cd backend && python -m pip install install -r requirements.txt
+    - name: Test with PyTest
+      run: cd backend/ && python -m pytest src
+    - name: Analysing the code with pylint
+      run: cd backend/ && python -m pylint src
