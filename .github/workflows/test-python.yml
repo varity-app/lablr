@@ -18,7 +18,8 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install install pylint pytest
         cd backend && python -m pip install install -r requirements.txt
-    - name: Test with PyTest
-      run: cd backend/ && python -m pytest src
     - name: Analysing the code with pylint
       run: cd backend/ && python -m pylint src
+    - name: Test with PyTest
+      if: ${{ always() }}
+      run: cd backend/ && python -m pytest src
