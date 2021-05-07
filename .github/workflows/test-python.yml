@@ -19,7 +19,7 @@ jobs:
         python -m pip install install pylint pytest
         cd backend && python -m pip install install -r requirements.txt
     - name: Analysing the code with pylint
-      run: cd backend/ && python -m pylint src
+      run: cd backend/src && pylint *
     - name: Test with PyTest
       if: ${{ always() }}
-      run: cd backend/ && python -m pytest src
+      run: cd backend/src && python -m pytest . --disable-pytest-warnings
