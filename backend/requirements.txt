@@ -3,5 +3,6 @@ uvicorn[standard]
 black
 pylint
 pytest
+pylint-pytest
 python-multipart
 sqlalchemy
