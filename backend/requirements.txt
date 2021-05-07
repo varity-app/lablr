@@ -4,5 +4,5 @@ black
 pylint
 pytest
 pylint-pytest
-python-multipart
+requests
 sqlalchemy
