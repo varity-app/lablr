@@ -32,11 +32,11 @@ mypy:
 
 pylint:
 	@echo "Running pylint..."
-	@cd backend && pylint src
+	@cd backend/src && pylint *
 
 pytest:
 	@echo "Running pytest..."
-	@cd backend && python -m pytest src --disable-pytest-warnings
+	@cd backend/src && python -m pytest . --disable-pytest-warnings
 
 radon:
 	@echo "Run Radon to compute complexity..."
