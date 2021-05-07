@@ -3,6 +3,7 @@ Declare the SQLAlchemy model for the Sample data object
 """
 
 from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 
 from . import Base
 
@@ -17,3 +18,5 @@ class Sample(Base):
 
     original_id = Column(String)
     text = Column(String)
+
+    dataset = relationship("Dataset", back_populates="samples")

@@ -19,3 +19,4 @@ class Dataset(Base):
     created_at = Column(DateTime)
 
     labels = relationship("LabelDefinition", back_populates="dataset")
+    samples = relationship("Sample", back_populates="dataset")
