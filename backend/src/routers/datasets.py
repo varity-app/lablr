@@ -28,6 +28,11 @@ class LabelDefinition(BaseModel):
     maximum: Optional[float] = 1
     interval: Optional[float] = 0.5
 
+    class Config:
+        """Pydantic Config subclass"""
+
+        orm_mode = True
+
 
 class Dataset(BaseModel):
     """Base pydantic model for a Dataset data object"""
@@ -40,11 +45,23 @@ class DatasetGet(Dataset):
     """Schema of a response for fetching datasets"""
 
     dataset_id: int
-    created_at: str
+    created_at: datetime
+
+    class Config:
+        """Pydantic Config subclass"""
+
+        orm_mode = True
 
 
 class DatasetGetOne(DatasetGet):
     """Schema of a response for fetching a single dataset"""
+
+    labels: List[LabelDefinition]
+
+    class Config:
+        """Pydantic Config subclass"""
+
+        orm_mode = True
 
 
 class DatasetCreate(Dataset):
