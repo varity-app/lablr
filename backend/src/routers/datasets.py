@@ -47,6 +47,16 @@ async def get_datasets(db_session: Session = Depends(get_db)):
     return db_session.query(dataset.Dataset).all()
 
 
+@router.get("/datasets/{dataset_id}", tags=["datasets"])
+async def get_dataset(dataset_id, db_session: Session = Depends(get_db)):
+    """Get one dataset"""
+
+    db_dataset = db_session.query(dataset.Dataset).filter_by(dataset_id=dataset_id).one()
+    _ = db_dataset.labels  # Results in `labels` field appearing in response
+
+    return db_dataset
+
+
 @router.post("/datasets", tags=["datasets"])
 async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_db)):
     """Create a dataset"""

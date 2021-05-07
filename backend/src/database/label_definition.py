@@ -3,6 +3,7 @@ Declare the SQLAlchemy model for the LabelDefinition data object
 """
 
 from sqlalchemy import Column, Integer, Float, String, ForeignKey
+from sqlalchemy.orm import relationship
 
 from . import Base
 
@@ -22,3 +23,5 @@ class LabelDefinition(Base):
     minimum = Column(Float, default=0.0)
     maximum = Column(Float, default=1.0)
     interval = Column(Float, default=0.5)
+
+    dataset = relationship("Dataset", back_populates="labels")
