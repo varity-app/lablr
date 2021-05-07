@@ -29,25 +29,41 @@ class LabelDefinition(BaseModel):
     interval: Optional[float] = 0.5
 
 
-class DatasetCreate(BaseModel):
-    """Schema of request body for creating a dataset"""
+class Dataset(BaseModel):
+    """Base pydantic model for a Dataset data object"""
 
     name: str
     description: str
-    labels: List[LabelDefinition]
+
+
+class DatasetGet(Dataset):
+    """Schema of a response for fetching datasets"""
+
+    dataset_id: int
+    created_at: str
+
+
+class DatasetGetOne(DatasetGet):
+    """Schema of a response for fetching a single dataset"""
+
+
+class DatasetCreate(Dataset):
+    """Schema of request body for creating a dataset"""
+
     id_field: str
     text_field: str
+    labels: List[LabelDefinition]
     csv64: str  # Base64 encoded string of the CSV that forms the upload
 
 
-@router.get("/datasets", tags=["datasets"])
+@router.get("/datasets", response_model=List[DatasetGet], tags=["datasets"])
 async def get_datasets(db_session: Session = Depends(get_db)):
     """Get all datasets"""
 
     return db_session.query(dataset.Dataset).all()
 
 
-@router.get("/datasets/{dataset_id}", tags=["datasets"])
+@router.get("/datasets/{dataset_id}", response_model=DatasetGetOne, tags=["datasets"])
 async def get_dataset(dataset_id, db_session: Session = Depends(get_db)):
     """Get one dataset"""
 
@@ -92,10 +108,10 @@ async def delete_dataset(dataset_id, db_session: Session = Depends(get_db)):
 
     db_session.commit()
 
-    return dict()
+    return f"Successfully deleted dataset with id `{dataset_id}`"
 
 
-@router.post("/datasets", tags=["datasets"])
+@router.post("/datasets", response_model=DatasetGet, tags=["datasets"])
 async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_db)):
     """Create a dataset and its dependent label definitions and samples"""
 
