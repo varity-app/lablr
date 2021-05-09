@@ -13,11 +13,11 @@ EXAMPLE_DATASET_BODY = {
     "description": "Dataset created during a unit test",
     "labels": [
         {
-            "name": "Tag Boolean",
+            "name": "Boolean",
             "variant": "boolean",
         },
         {
-            "name": "Tag Boolean",
+            "name": "Numerical",
             "variant": "numerical",
             "minimum": -1,
             "maximum": 1,
@@ -84,7 +84,7 @@ def test_create_invalid_csv64_dataset():
 
     response = client.post("/datasets", json=body)
 
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert (
         response.json()["detail"] == "Field csv64 does not have a valid base64 encoding"
     )
@@ -96,3 +96,19 @@ def test_delete_nonexistent_dataset():
     response = client.delete("/datasets/daflkadsjflkajdflkadfadadfadsfad")
 
     assert response.status_code == 404
+
+
+def test_create_invalid_label_dataset():
+    """Unit test for attempting to create a dataset with an invalid label definition"""
+    body = EXAMPLE_DATASET_BODY.copy()
+
+    body["labels"] = [
+        {
+            "name": "Invalid label",
+            "variant": "nosuchthing",
+        }
+    ]
+
+    response = client.post("/datasets", json=body)
+
+    assert response.status_code == 422

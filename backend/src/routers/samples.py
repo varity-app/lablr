@@ -153,7 +153,7 @@ def label_sample(
             )
 
         # Check if boolean variable is either 0 or 1
-        if label_def.variant == LabelVariants.BOOLEAN in (0, 1):
+        if label_def.variant == LabelVariants.BOOLEAN and value not in (0, 1):
             raise HTTPException(
                 status_code=422,
                 detail=f"Value `{value}` of label `{label}` must be either 0 or 1.",

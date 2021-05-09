@@ -8,3 +8,5 @@ class LabelVariants:
 
     NUMERICAL = "numerical"
     BOOLEAN = "boolean"
+
+    valid_labels = (NUMERICAL, BOOLEAN)
