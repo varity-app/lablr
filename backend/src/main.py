@@ -6,7 +6,7 @@ import os
 
 from fastapi import FastAPI
 
-from routers import datasets
+from routers import datasets, samples
 from database import engine, Base
 
 LABLR_DIR = f"{os.environ.get('HOME')}/.lablr"
@@ -18,6 +18,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 app.include_router(datasets.router)
+app.include_router(samples.router)
 
 
 @app.get("/")
