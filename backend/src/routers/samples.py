@@ -2,7 +2,7 @@
 Routes related to Dataset objects
 """
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 import logging
 
 from fastapi import APIRouter, Depends
@@ -21,11 +21,41 @@ class Sample(BaseModel):
     sample_id: str
     original_id: str
     text: str
-    labels: Dict[str, float]
+    labels: Optional[Dict[str, float]]
     save_for_later: bool
 
+    class Config:
+        """Pydantic Config subclass"""
 
-@router.get("/datasets/{dataset_id}/samples", tags=["samples"])
+        orm_mode = True
+
+
+class PaginationMetadata(BaseModel):
+    """Schema for pagination metadata"""
+
+    offset: int
+    limit: int
+    next_offset: Optional[int]
+    total: int
+
+
+class Metadata(BaseModel):
+    """Schema of the metadata returned with fetching multiple samples"""
+
+    labeled_percent: float
+    pagination: PaginationMetadata
+
+
+class SamplesGet(BaseModel):
+    """Schema of the response when fetching multiple samples"""
+
+    samples: List[Sample]
+    metadata: Metadata
+
+
+@router.get(
+    "/datasets/{dataset_id}/samples", response_model=SamplesGet, tags=["samples"]
+)
 def get_samples(
     dataset_id,
     offset: int = 0,
