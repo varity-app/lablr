@@ -19,9 +19,3 @@ app = FastAPI()
 
 app.include_router(datasets.router)
 app.include_router(samples.router)
-
-
-@app.get("/")
-async def root():
-    """Placeholder endpoint"""
-    return dict(message="Hello World!")
