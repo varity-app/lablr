@@ -2,15 +2,17 @@
 Routes related to Dataset objects
 """
 
-from typing import List, Dict, Optional
+from typing import Dict, Optional
+import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from sqlalchemy.orm import Session
 
 from database import sample, get_db
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 class Sample(BaseModel):
@@ -36,7 +38,7 @@ def get_samples(
     query = db_session.query(sample.Sample).filter_by(dataset_id=dataset_id)
 
     samples_count = query.count()
-    labeled_count = query.filter(sample.Sample is not None).count()
+    labeled_count = query.filter(sample.Sample.labels.isnot(None)).count()
     labeled_percent = 0
     if samples_count > 0:
         labeled_percent = float(labeled_count) / samples_count
@@ -44,9 +46,9 @@ def get_samples(
     # Filter by labeled or not
     if labeled is not None:
         if labeled:
-            query = query.filter(sample.Sample is not None)
+            query = query.filter(sample.Sample.labels.isnot(None))
         else:
-            query = query.filter(sample.Sample is None)
+            query = query.filter_by(labels=None)
 
     # Pagination Metadata
     total = query.count()
