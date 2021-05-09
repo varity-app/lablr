@@ -9,6 +9,7 @@ import csv
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from sqlalchemy.orm import Session, exc
 
@@ -85,14 +86,14 @@ async def get_datasets(db_session: Session = Depends(get_db)):
 async def get_dataset(dataset_id, db_session: Session = Depends(get_db)):
     """Get one dataset"""
 
-    try:
-        db_dataset = (
-            db_session.query(dataset.Dataset).filter_by(dataset_id=dataset_id).one()
-        )
-    except exc.NoResultFound as error:
+    db_dataset = (
+        db_session.query(dataset.Dataset).filter_by(dataset_id=dataset_id).first()
+    )
+
+    if db_dataset is None:
         raise HTTPException(
             status_code=404, detail=f"No dataset found with id `{dataset_id}`"
-        ) from error
+        )
 
     _ = db_dataset.labels  # Results in `labels` field appearing in response
 
@@ -104,14 +105,14 @@ async def delete_dataset(dataset_id, db_session: Session = Depends(get_db)):
     """Delete a dataset and its dependent label definitions and samples"""
 
     # Fetch dataset
-    try:
-        db_dataset = (
-            db_session.query(dataset.Dataset).filter_by(dataset_id=dataset_id).one()
-        )
-    except exc.NoResultFound as error:
+    db_dataset = (
+        db_session.query(dataset.Dataset).filter_by(dataset_id=dataset_id).first()
+    )
+
+    if db_dataset is None:
         raise HTTPException(
             status_code=404, detail=f"No dataset found with id `{dataset_id}`"
-        ) from error
+        )
 
     # Delete label definitions
     for label in db_dataset.labels:
@@ -193,3 +194,41 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
     db_session.refresh(db_dataset)
 
     return db_dataset
+
+
+@router.get(
+    "/datasets/{dataset_id}/export", response_class=PlainTextResponse, tags=["datasets"]
+)
+def export_labels(dataset_id, db_session: Session = Depends(get_db)):
+    """Export a dataset's labels in CSV format"""
+
+    db_dataset = (
+        db_session.query(dataset.Dataset).filter_by(dataset_id=dataset_id).first()
+    )
+
+    if db_dataset is None:
+        raise HTTPException(
+            status_code=404, detail=f"No dataset found with id `{dataset_id}`"
+        )
+
+    output = StringIO()
+
+    label_names = ["id"]
+    for label in db_dataset.labels:
+        label_names.append(label.name)
+
+    writer = csv.DictWriter(output, label_names)
+    writer.writeheader()
+
+    for db_sample in db_dataset.samples:
+        if db_sample.labels is None:
+            continue
+
+        body = dict(
+            id=db_sample.original_id,
+            **db_sample.labels,
+        )
+        print(body)
+        writer.writerow(body)
+
+    return output.getvalue()

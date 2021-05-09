@@ -140,3 +140,31 @@ def test_label_sample_invalid_boolean():
     assert response.status_code == 422
 
     delete_demo_dataset(dataset_id)
+
+
+def test_export_labels():
+    """Unit test for exporting a dataset's labels"""
+
+    dataset_id = create_demo_dataset()
+
+    # Fetch samples
+    response = client.get(f"/datasets/{dataset_id}/samples")
+    assert response.status_code == 200
+
+    sample_id = response.json()["samples"][0]["sample_id"]
+
+    # Label sample
+    body = {
+        "labels": {
+            "Boolean": 1,
+        }
+    }
+    response = client.put(f"/datasets/{dataset_id}/samples/{sample_id}", json=body)
+    print(response.json())
+
+    assert response.status_code == 200
+
+    response = client.get(f"/datasets/{dataset_id}")
+    assert response.status_code == 200
+
+    delete_demo_dataset(dataset_id)
