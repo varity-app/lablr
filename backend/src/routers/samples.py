@@ -7,7 +7,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
-from sqlalchemy.orm import Session, exc
+from sqlalchemy.orm import Session
 
 from database import sample, label_definition, get_db
 from util.constants import LabelVariants
@@ -160,16 +160,16 @@ def label_sample(
             )
 
     # Get and update sample
-    try:
-        db_sample = (
-            db_session.query(sample.Sample)
-            .filter_by(sample_id=sample_id, dataset_id=dataset_id)
-            .one()
-        )
-    except exc.NoResultFound as error:
+    db_sample = (
+        db_session.query(sample.Sample)
+        .filter_by(sample_id=sample_id, dataset_id=dataset_id)
+        .first()
+    )
+
+    if db_sample is None:
         raise HTTPException(
             status_code=404, detail=f"No sample found with id `{sample_id}`"
-        ) from error
+        )
 
     db_sample.labels = data.labels
     db_session.commit()

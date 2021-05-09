@@ -11,7 +11,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
-from sqlalchemy.orm import Session, exc
+from sqlalchemy.orm import Session
 
 from database import dataset, label_definition, sample, get_db
 from util.base64 import decode_b64string  # pylint: disable=no-name-in-module
