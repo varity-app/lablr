@@ -114,7 +114,7 @@ class SamplePut(BaseModel):
     labels: Dict[str, float]
 
 
-@router.put("/datasets/{dataset_id}/samples/{sample_id}")
+@router.put("/datasets/{dataset_id}/samples/{sample_id}", tags=["samples"])
 def label_sample(
     data: SamplePut, dataset_id, sample_id, db_session: Session = Depends(get_db)
 ):
