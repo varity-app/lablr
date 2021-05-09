@@ -16,3 +16,6 @@ ignore-imports=yes
 
 [MESSAGES CONTROL]
 disable=W0223,W1203,R0902,R0913,R0914,R0903,F0401,R0801,F6401
+
+[FORMAT]
+max-line-length=120

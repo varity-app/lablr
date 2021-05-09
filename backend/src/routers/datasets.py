@@ -9,11 +9,13 @@ import csv
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
-from sqlalchemy.orm import Session, exc
+from sqlalchemy.orm import Session
 
 from database import dataset, label_definition, sample, get_db
 from util.base64 import decode_b64string  # pylint: disable=no-name-in-module
+from util.constants import LabelVariants
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -84,14 +86,14 @@ async def get_datasets(db_session: Session = Depends(get_db)):
 async def get_dataset(dataset_id, db_session: Session = Depends(get_db)):
     """Get one dataset"""
 
-    try:
-        db_dataset = (
-            db_session.query(dataset.Dataset).filter_by(dataset_id=dataset_id).one()
-        )
-    except exc.NoResultFound as error:
+    db_dataset = (
+        db_session.query(dataset.Dataset).filter_by(dataset_id=dataset_id).first()
+    )
+
+    if db_dataset is None:
         raise HTTPException(
             status_code=404, detail=f"No dataset found with id `{dataset_id}`"
-        ) from error
+        )
 
     _ = db_dataset.labels  # Results in `labels` field appearing in response
 
@@ -103,14 +105,14 @@ async def delete_dataset(dataset_id, db_session: Session = Depends(get_db)):
     """Delete a dataset and its dependent label definitions and samples"""
 
     # Fetch dataset
-    try:
-        db_dataset = (
-            db_session.query(dataset.Dataset).filter_by(dataset_id=dataset_id).one()
-        )
-    except exc.NoResultFound as error:
+    db_dataset = (
+        db_session.query(dataset.Dataset).filter_by(dataset_id=dataset_id).first()
+    )
+
+    if db_dataset is None:
         raise HTTPException(
             status_code=404, detail=f"No dataset found with id `{dataset_id}`"
-        ) from error
+        )
 
     # Delete label definitions
     for label in db_dataset.labels:
@@ -143,6 +145,13 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
 
     # Create label definitions
     for label in data.labels:
+        if label.variant not in LabelVariants.valid_labels:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Variant `{label.variant}` for label `{label.name}` "
+                f"must be one of {LabelVariants.valid_labels}",
+            )
+
         db_label = label_definition.LabelDefinition(
             dataset_id=db_dataset.dataset_id,
             name=label.name,
@@ -158,7 +167,7 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
         csv_string = decode_b64string(data.csv64)
     except ValueError as error:
         raise HTTPException(
-            status_code=400, detail="Field csv64 does not have a valid base64 encoding"
+            status_code=422, detail="Field csv64 does not have a valid base64 encoding"
         ) from error
 
     # Read CSV
@@ -169,7 +178,7 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
     for field in (data.id_field, data.text_field):
         if field not in reader.fieldnames:
             raise HTTPException(
-                status_code=400, detail=f"Field {field} not found in provided CSV"
+                status_code=422, detail=f"Field {field} not found in provided CSV"
             )
 
     # Create samples in DB
@@ -185,3 +194,41 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
     db_session.refresh(db_dataset)
 
     return db_dataset
+
+
+@router.get(
+    "/datasets/{dataset_id}/export", response_class=PlainTextResponse, tags=["datasets"]
+)
+def export_labels(dataset_id, db_session: Session = Depends(get_db)):
+    """Export a dataset's labels in CSV format"""
+
+    db_dataset = (
+        db_session.query(dataset.Dataset).filter_by(dataset_id=dataset_id).first()
+    )
+
+    if db_dataset is None:
+        raise HTTPException(
+            status_code=404, detail=f"No dataset found with id `{dataset_id}`"
+        )
+
+    output = StringIO()
+
+    label_names = ["id"]
+    for label in db_dataset.labels:
+        label_names.append(label.name)
+
+    writer = csv.DictWriter(output, label_names)
+    writer.writeheader()
+
+    for db_sample in db_dataset.samples:
+        if db_sample.labels is None:
+            continue
+
+        body = dict(
+            id=db_sample.original_id,
+            **db_sample.labels,
+        )
+        print(body)
+        writer.writerow(body)
+
+    return output.getvalue()
