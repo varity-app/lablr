@@ -44,6 +44,23 @@ def test_samples_get():
     delete_demo_dataset(dataset_id)
 
 
+def test_sample_get():
+    """Unit test for creating a new dataset and fetching a single sample"""
+
+    dataset_id = create_demo_dataset()
+
+    # Fetch samples
+    response = client.get(f"/datasets/{dataset_id}/samples")
+    assert response.status_code == 200
+
+    sample_id = response.json()["samples"][0]["sample_id"]
+
+    response = client.get(f"/datasets/{dataset_id}/samples/{sample_id}")
+    assert response.status_code == 200
+
+    delete_demo_dataset(dataset_id)
+
+
 def test_label_sample():
     """Unit test for creating a new dataset and labeling its samples"""
 

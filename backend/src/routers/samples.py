@@ -108,6 +108,27 @@ def get_samples(
     )
 
 
+@router.get(
+    "/datasets/{dataset_id}/samples/{sample_id}",
+    response_model=Sample,
+    tags=["samples"],
+)
+def get_one_sample(dataset_id, sample_id, db_session: Session = Depends(get_db)):
+    """Get a single sample"""
+    db_sample = (
+        db_session.query(sample.Sample)
+        .filter_by(sample_id=sample_id, dataset_id=dataset_id)
+        .first()
+    )
+
+    if db_sample is None:
+        raise HTTPException(
+            status_code=404, detail=f"No sample found with id `{sample_id}`"
+        )
+
+    return db_sample
+
+
 class SamplePut(BaseModel):
     """Schema of the request body for updating (labeling) a sample"""
 
