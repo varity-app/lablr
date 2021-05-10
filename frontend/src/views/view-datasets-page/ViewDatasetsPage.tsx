@@ -47,22 +47,22 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
               icon={
                 <EuiAvatar size="s" type="space" name="Reddit Submissions" />
               }
-              onClick={() => {}}
+              onClick={() => history.push("/datasets/1")}
               label="Reddit Submissions"
               extraAction={{
                 color: "subdued",
-                onClick: () => {},
+                onClick: () => history.push("/datasets/1"),
                 iconType: "eye",
                 "aria-label": "View dataset",
               }}
             />
             <EuiListGroupItem
               icon={<EuiAvatar size="s" type="space" name="Reddit Comments" />}
-              onClick={() => {}}
+              onClick={() => history.push("/datasets/1")}
               label="Reddit Comments"
               extraAction={{
                 color: "subdued",
-                onClick: () => {},
+                onClick: () => history.push("/datasets/1"),
                 iconType: "eye",
                 "aria-label": "View dataset",
               }}
@@ -75,11 +75,11 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
                   name="Reddit Comments Tagging 2020"
                 />
               }
-              onClick={() => {}}
+              onClick={() => history.push("/datasets/1")}
               label="Reddit Comments Tagging 2020"
               extraAction={{
                 color: "subdued",
-                onClick: () => {},
+                onClick: () => history.push("/datasets/1"),
                 iconType: "eye",
                 "aria-label": "View dataset",
               }}

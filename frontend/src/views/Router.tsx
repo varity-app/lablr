@@ -10,6 +10,7 @@ import {
 } from "@elastic/eui";
 
 import ViewDatasetsPage from "./view-datasets-page/ViewDatasetsPage";
+import ViewDatasetPage from "./view-dataset-page/ViewDatasetPage";
 import CreateDatasetPage from "./create-dataset-page/CreateDatasetPage";
 
 import Header from "./components/Header";
@@ -44,7 +45,9 @@ const Router: React.FC = () => {
                 <Route path="/datasets/create" exact>
                   <CreateDatasetPage setBreadcrumbs={setBreadcrumbs} />
                 </Route>
-                <Route path="/datasets/:dataset_id" />
+                <Route path="/datasets/:dataset_id">
+                  <ViewDatasetPage setBreadcrumbs={setBreadcrumbs} />
+                </Route>
                 <Route path="/datasets/:dataset_id/label" />
               </Switch>
             </EuiPageContentBody>
