@@ -53,6 +53,7 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
                 color: "subdued",
                 onClick: () => {},
                 iconType: "eye",
+                "aria-label": "View dataset",
               }}
             />
             <EuiListGroupItem
@@ -63,6 +64,7 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
                 color: "subdued",
                 onClick: () => {},
                 iconType: "eye",
+                "aria-label": "View dataset",
               }}
             />
             <EuiListGroupItem
@@ -79,6 +81,7 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
                 color: "subdued",
                 onClick: () => {},
                 iconType: "eye",
+                "aria-label": "View dataset",
               }}
             />
           </EuiListGroup>
@@ -90,6 +93,7 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
       <EuiButton
         onClick={() => history.push("/datasets/create")}
         iconType="plus"
+        aria-label="Create new dataset"
       >
         Create new dataset
       </EuiButton>

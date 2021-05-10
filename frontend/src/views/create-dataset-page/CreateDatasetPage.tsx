@@ -12,6 +12,15 @@ import {
   EuiFormRow,
   EuiFilePicker,
   EuiSelect,
+  EuiButton,
+  EuiPopover,
+  EuiFlexGroup,
+  EuiFlexItem,
+  EuiFieldNumber,
+  EuiListGroup,
+  EuiListGroupItem,
+  EuiAvatar,
+  EuiBadge,
 } from "@elastic/eui";
 
 interface IProps {
@@ -27,6 +36,8 @@ enum Tabs {
 const CreateDatasetPage: React.FC<IProps> = (props) => {
   const { setBreadcrumbs } = props;
   const [tab, setTab] = useState(Tabs.metadata);
+  const [boolPopOpen, setBoolPopOpen] = useState(false);
+  const [numPopOpen, setNumPopOpen] = useState(false);
 
   const history = useHistory();
 
@@ -47,9 +58,12 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
   }, [setBreadcrumbs, history]);
 
   const isTabActive = (mode: Tabs) => mode === tab;
-  const getFormRowStyles = (mode: Tabs) => ({
-    display: isTabActive(mode) ? "block" : "none",
-  });
+  const getFormRowStyles = (mode: Tabs) =>
+    !isTabActive(mode)
+      ? {
+          display: "none",
+        }
+      : {};
 
   const horizontalSteps = [
     {
@@ -137,6 +151,131 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
               ]}
             />
           </EuiFormRow>
+
+          <EuiFlexGroup
+            style={getFormRowStyles(Tabs.labels)}
+            gutterSize="s"
+            responsive={false}
+          >
+            <EuiFlexItem>
+              <EuiPopover
+                button={
+                  <EuiButton
+                    iconType="arrowDown"
+                    iconSide="right"
+                    onClick={() => setBoolPopOpen(!boolPopOpen)}
+                    color="primary"
+                    aria-label="Add boolean label"
+                  >
+                    Add Boolean Label
+                  </EuiButton>
+                }
+                isOpen={boolPopOpen}
+                closePopover={() => setBoolPopOpen(false)}
+              >
+                <div style={{ width: 300 }}>
+                  <EuiForm component="form">
+                    <EuiFlexGroup>
+                      <EuiFlexItem>
+                        <EuiFormRow label="Name">
+                          <EuiFieldText />
+                        </EuiFormRow>
+                      </EuiFlexItem>
+
+                      <EuiFlexItem grow={false}>
+                        <EuiFormRow hasEmptyLabelSpace>
+                          <EuiButton>Add</EuiButton>
+                        </EuiFormRow>
+                      </EuiFlexItem>
+                    </EuiFlexGroup>
+                  </EuiForm>
+                </div>
+              </EuiPopover>
+            </EuiFlexItem>
+
+            <EuiFlexItem>
+              <EuiPopover
+                button={
+                  <EuiButton
+                    iconType="arrowDown"
+                    iconSide="right"
+                    onClick={() => setNumPopOpen(!numPopOpen)}
+                    color="danger"
+                    aria-label="Add numerical label"
+                  >
+                    Add Numerical Label
+                  </EuiButton>
+                }
+                isOpen={numPopOpen}
+                closePopover={() => setNumPopOpen(false)}
+              >
+                <div style={{ width: 400 }}>
+                  <EuiForm component="form">
+                    <EuiFormRow label="Name">
+                      <EuiFieldText name="name" />
+                    </EuiFormRow>
+
+                    <EuiSpacer size="m" />
+
+                    <EuiFlexGroup>
+                      <EuiFlexItem grow={1}>
+                        <EuiFormRow label="Minimum">
+                          <EuiFieldNumber name="minimum" min={-10} max={10} />
+                        </EuiFormRow>
+                      </EuiFlexItem>
+
+                      <EuiFlexItem grow={1}>
+                        <EuiFormRow label="Maximum">
+                          <EuiFieldNumber name="maximum" min={-10} max={10} />
+                        </EuiFormRow>
+                      </EuiFlexItem>
+
+                      <EuiFlexItem grow={1}>
+                        <EuiFormRow label="Interval">
+                          <EuiFieldNumber name="interval" min={-10} max={10} />
+                        </EuiFormRow>
+                      </EuiFlexItem>
+                    </EuiFlexGroup>
+
+                    <EuiFormRow hasEmptyLabelSpace>
+                      <EuiButton>Add</EuiButton>
+                    </EuiFormRow>
+                  </EuiForm>
+                </div>
+              </EuiPopover>
+            </EuiFlexItem>
+          </EuiFlexGroup>
+
+          <EuiListGroup style={getFormRowStyles(Tabs.labels)}>
+            <EuiSpacer size="m" />
+            <EuiListGroupItem
+              icon={<EuiAvatar size="s" type="space" name="News" />}
+              label={
+                <span>
+                  News <EuiBadge color="primary">boolean</EuiBadge>
+                </span>
+              }
+              extraAction={{
+                iconType: "trash",
+                alwaysShow: true,
+                "aria-label": "Delete label",
+              }}
+            />
+            <EuiListGroupItem
+              icon={<EuiAvatar size="s" type="space" name="Confidence" />}
+              label={
+                <span>
+                  Confidence{" "}
+                  <EuiBadge color="danger">numerical (0, 1, 0.5)</EuiBadge>
+                </span>
+              }
+              extraAction={{
+                iconType: "trash",
+                alwaysShow: true,
+                "aria-label": "Delete label",
+              }}
+            />
+          </EuiListGroup>
         </EuiForm>
       </EuiPanel>
     </React.Fragment>
