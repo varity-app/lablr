@@ -1,22 +1,58 @@
-import React from "react";
+import React, { useState } from "react";
 import { BrowserRouter, Switch, Route, Redirect } from "react-router-dom";
 
+import {
+  EuiBreadcrumb,
+  EuiPage,
+  EuiPageBody,
+  EuiPageContent,
+  EuiPageContentBody,
+} from "@elastic/eui";
+
 import ViewDatasetsPage from "./view-datasets-page/ViewDatasetsPage";
+import CreateDatasetPage from "./create-dataset-page/CreateDatasetPage";
 
-const Router: React.FC = () => (
-  <BrowserRouter>
-    <Switch>
-      <Route path="/" exact>
-        <Redirect to="/datasets" />
-      </Route>
+import Header from "./components/Header";
 
-      <Route path="/datasets" exact component={ViewDatasetsPage} />
+const Router: React.FC = () => {
+  const [breadcrumbs, setBreadcrumbs] = useState<EuiBreadcrumb[]>([]);
 
-      <Route path="/datasets/create" exact />
-      <Route path="/datasets/:dataset_id" />
-      <Route path="/datasets/:dataset_id/label" />
-    </Switch>
-  </BrowserRouter>
-);
+  return (
+    <BrowserRouter>
+      <Header breadcrumbs={breadcrumbs} />
+
+      <EuiPage paddingSize="none">
+        <EuiPageBody panelled panelProps={{ hasShadow: false }}>
+          <EuiPageContent
+            hasBorder={false}
+            hasShadow={false}
+            paddingSize="none"
+            color="transparent"
+            borderRadius="none"
+            horizontalPosition="center"
+          >
+            <EuiPageContentBody>
+              <Switch>
+                <Route path="/" exact>
+                  <Redirect to="/datasets" />
+                </Route>
+
+                <Route path="/datasets" exact>
+                  <ViewDatasetsPage setBreadcrumbs={setBreadcrumbs} />
+                </Route>
+
+                <Route path="/datasets/create" exact>
+                  <CreateDatasetPage setBreadcrumbs={setBreadcrumbs} />
+                </Route>
+                <Route path="/datasets/:dataset_id" />
+                <Route path="/datasets/:dataset_id/label" />
+              </Switch>
+            </EuiPageContentBody>
+          </EuiPageContent>
+        </EuiPageBody>
+      </EuiPage>
+    </BrowserRouter>
+  );
+};
 
 export default Router;

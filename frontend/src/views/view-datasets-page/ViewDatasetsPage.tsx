@@ -1,11 +1,8 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, Dispatch, SetStateAction } from "react";
+import { useHistory } from "react-router-dom";
 
 import {
-  EuiPage,
-  EuiPageBody,
-  EuiPageContent,
-  EuiPageContentBody,
+  EuiBreadcrumb,
   EuiTitle,
   EuiSpacer,
   EuiListGroup,
@@ -17,101 +14,86 @@ import {
   EuiButton,
 } from "@elastic/eui";
 
-import Header from "../components/Header";
+interface IProps {
+  setBreadcrumbs: Dispatch<SetStateAction<EuiBreadcrumb[]>>;
+}
 
-const ViewDatasetPage: React.FC = () => {
-  const breadcrumbs = [
-    {
-      text: "Datasets",
-    },
-  ];
+const ViewDatasetPage: React.FC<IProps> = (props) => {
+  const { setBreadcrumbs } = props;
+
+  const history = useHistory();
+
+  useEffect(() => {
+    setBreadcrumbs([
+      {
+        text: "Datasets",
+      },
+    ]);
+  }, [setBreadcrumbs]);
 
   return (
-    <React.Fragment>
-      <Header breadcrumbs={breadcrumbs} />
-      <EuiPage paddingSize="none">
-        <EuiPageBody panelled panelProps={{ hasShadow: false }}>
-          <EuiPageContent
-            hasBorder={false}
-            hasShadow={false}
-            paddingSize="none"
-            color="transparent"
-            borderRadius="none"
-            horizontalPosition="center"
-          >
-            <EuiPageContentBody style={{ textAlign: "center" }}>
-              <EuiSpacer size="l" />
-              <EuiTitle>
-                <h1>Datasets</h1>
-              </EuiTitle>
+    <div style={{ textAlign: "center" }}>
+      <EuiSpacer size="l" />
+      <EuiTitle size="l">
+        <h1 style={{ textAlign: "center" }}>Datasets</h1>
+      </EuiTitle>
 
-              <EuiSpacer size="xl" />
+      <EuiSpacer size="xl" />
 
-              <EuiFlexGroup>
-                <EuiFlexItem>
-                  <EuiListGroup style={{ minWidth: 500, maxWidth: 1000 }}>
-                    <EuiListGroupItem
-                      icon={
-                        <EuiAvatar
-                          size="s"
-                          type="space"
-                          name="Reddit Submissions"
-                        />
-                      }
-                      onClick={() => {}}
-                      label="Reddit Submissions"
-                      extraAction={{
-                        color: "subdued",
-                        onClick: () => {},
-                        iconType: "eye",
-                      }}
-                    />
-                    <EuiListGroupItem
-                      icon={
-                        <EuiAvatar
-                          size="s"
-                          type="space"
-                          name="Reddit Comments"
-                        />
-                      }
-                      onClick={() => {}}
-                      label="Reddit Comments"
-                      extraAction={{
-                        color: "subdued",
-                        onClick: () => {},
-                        iconType: "eye",
-                      }}
-                    />
-                    <EuiListGroupItem
-                      icon={
-                        <EuiAvatar
-                          size="s"
-                          type="space"
-                          name="Reddit Comments Tagging 2020"
-                        />
-                      }
-                      onClick={() => {}}
-                      label="Reddit Comments Tagging 2020"
-                      extraAction={{
-                        color: "subdued",
-                        onClick: () => {},
-                        iconType: "eye",
-                      }}
-                    />
-                  </EuiListGroup>
-                </EuiFlexItem>
-              </EuiFlexGroup>
+      <EuiFlexGroup>
+        <EuiFlexItem>
+          <EuiListGroup style={{ minWidth: 500, maxWidth: 1000 }}>
+            <EuiListGroupItem
+              icon={
+                <EuiAvatar size="s" type="space" name="Reddit Submissions" />
+              }
+              onClick={() => {}}
+              label="Reddit Submissions"
+              extraAction={{
+                color: "subdued",
+                onClick: () => {},
+                iconType: "eye",
+              }}
+            />
+            <EuiListGroupItem
+              icon={<EuiAvatar size="s" type="space" name="Reddit Comments" />}
+              onClick={() => {}}
+              label="Reddit Comments"
+              extraAction={{
+                color: "subdued",
+                onClick: () => {},
+                iconType: "eye",
+              }}
+            />
+            <EuiListGroupItem
+              icon={
+                <EuiAvatar
+                  size="s"
+                  type="space"
+                  name="Reddit Comments Tagging 2020"
+                />
+              }
+              onClick={() => {}}
+              label="Reddit Comments Tagging 2020"
+              extraAction={{
+                color: "subdued",
+                onClick: () => {},
+                iconType: "eye",
+              }}
+            />
+          </EuiListGroup>
+        </EuiFlexItem>
+      </EuiFlexGroup>
 
-              <EuiHorizontalRule margin="l" />
+      <EuiHorizontalRule margin="l" />
 
-              <EuiButton iconType="plus">
-                <Link to="/datasets/create">Create new dataset</Link>
-              </EuiButton>
-            </EuiPageContentBody>
-          </EuiPageContent>
-        </EuiPageBody>
-      </EuiPage>
-    </React.Fragment>
+      <EuiButton
+        onClick={() => history.push("/datasets/create")}
+        iconType="plus"
+      >
+        Create new dataset
+      </EuiButton>
+    </div>
   );
 };
 
