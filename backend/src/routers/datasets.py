@@ -59,11 +59,7 @@ class DatasetGetOne(DatasetGet):
     """Schema of a response for fetching a single dataset"""
 
     labels: List[LabelDefinition]
-
-    class Config:
-        """Pydantic Config subclass"""
-
-        orm_mode = True
+    labeled_percent: float
 
 
 class DatasetCreate(Dataset):
@@ -95,9 +91,23 @@ async def get_dataset(dataset_id, db_session: Session = Depends(get_db)):
             status_code=404, detail=f"No dataset found with id `{dataset_id}`"
         )
 
-    _ = db_dataset.labels  # Results in `labels` field appearing in response
+    # Calculate labeled percentage
+    query = db_session.query(sample.Sample).filter_by(dataset_id=dataset_id)
 
-    return db_dataset
+    samples_count = query.count()
+    labeled_count = query.filter(sample.Sample.labels.isnot(None)).count()
+    labeled_percent = float(labeled_count) / samples_count
+
+    response = dict(
+        dataset_id=db_dataset.dataset_id,
+        name=db_dataset.name,
+        description=db_dataset.description,
+        created_at=db_dataset.created_at,
+        labels=db_dataset.labels,
+        labeled_percent=labeled_percent,
+    )
+
+    return response
 
 
 @router.delete("/datasets/{dataset_id}", tags=["datasets"])
