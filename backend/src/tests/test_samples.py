@@ -79,7 +79,9 @@ def test_label_sample():
             "Numerical": 0.5,
         }
     }
-    response = client.put(f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body)
+    response = client.put(
+        f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body
+    )
     print(response.json())
 
     assert response.status_code == 200
@@ -90,7 +92,9 @@ def test_label_sample():
             "Numerical": 0,
         }
     }
-    response = client.put(f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body)
+    response = client.put(
+        f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body
+    )
     print(response.json())
 
     assert response.status_code == 200
@@ -115,7 +119,9 @@ def test_label_sample_invalid_numerical():
             "Numerical": -10,
         }
     }
-    response = client.put(f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body)
+    response = client.put(
+        f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body
+    )
     print(response.json())
 
     assert response.status_code == 422
@@ -126,7 +132,9 @@ def test_label_sample_invalid_numerical():
             "Numerical": 10,
         }
     }
-    response = client.put(f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body)
+    response = client.put(
+        f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body
+    )
     print(response.json())
 
     assert response.status_code == 422
@@ -151,7 +159,9 @@ def test_label_sample_invalid_boolean():
             "Boolean": 0.5,
         }
     }
-    response = client.put(f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body)
+    response = client.put(
+        f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body
+    )
     print(response.json())
 
     assert response.status_code == 422
@@ -176,7 +186,9 @@ def test_export_labels():
             "Boolean": 1,
         }
     }
-    response = client.put(f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body)
+    response = client.put(
+        f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body
+    )
     print(response.json())
 
     assert response.status_code == 200

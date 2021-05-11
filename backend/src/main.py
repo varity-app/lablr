@@ -22,7 +22,7 @@ app = FastAPI(
     description="Backend for the Lablr annotation tool",
     version="0.0.0",
     docs_url=f"{PREFIX}/docs",
-    openapi_url=f"{PREFIX}/openapi.json"
+    openapi_url=f"{PREFIX}/openapi.json",
 )
 
 app.include_router(datasets.router, prefix=PREFIX)

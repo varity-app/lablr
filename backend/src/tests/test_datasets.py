@@ -53,15 +53,16 @@ def test_create_delete_dataset():
 
     response = client.post(f"{PREFIX}/datasets", json=body)
     response_body = response.json()
+    dataset_id = response_body["dataset_id"]
 
     assert response.status_code == 200
     assert response_body["name"] == "Unit Test Dataset"
     assert response_body["description"] == "Dataset created during a unit test"
 
-    response = client.get(f"{PREFIX}/datasets/{response_body['dataset_id']}")
+    response = client.get(f"{PREFIX}/datasets/{dataset_id}")
     assert response.status_code == 200
 
-    response = client.delete(f"{PREFIX}/datasets/{response_body['dataset_id']}")
+    response = client.delete(f"{PREFIX}/datasets/{dataset_id}")
     assert response.status_code == 200
 
 
@@ -73,7 +74,7 @@ def test_create_missing_fields_dataset():
         del body[field]
 
         response = client.post(f"{PREFIX}/datasets", json=body)
-        assert response.status_code != 200
+        assert response.status_code == 422
 
 
 def test_create_invalid_csv64_dataset():

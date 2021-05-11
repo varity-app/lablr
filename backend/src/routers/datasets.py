@@ -146,6 +146,8 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
     # Create label definitions
     for label in data.labels:
         if label.variant not in LabelVariants.valid_labels:
+            db_session.delete(db_dataset)
+            db_session.commit()
             raise HTTPException(
                 status_code=422,
                 detail=f"Variant `{label.variant}` for label `{label.name}` "
@@ -166,6 +168,8 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
     try:
         csv_string = decode_b64string(data.csv64)
     except ValueError as error:
+        db_session.delete(db_dataset)
+        db_session.commit()
         raise HTTPException(
             status_code=422, detail="Field csv64 does not have a valid base64 encoding"
         ) from error
@@ -177,6 +181,8 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
     # Check that id and text fields are valid
     for field in (data.id_field, data.text_field):
         if field not in reader.fieldnames:
+            db_session.delete(db_dataset)
+            db_session.commit()
             raise HTTPException(
                 status_code=422, detail=f"Field {field} not found in provided CSV"
             )
