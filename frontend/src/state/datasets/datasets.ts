@@ -2,13 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
 import { API_PREFIX } from "config";
-
-interface Dataset {
-  name: string;
-  description: string;
-  dataset_id: number;
-  created_at: string;
-}
+import { Dataset } from "./types";
 
 interface State {
   data: Dataset[];

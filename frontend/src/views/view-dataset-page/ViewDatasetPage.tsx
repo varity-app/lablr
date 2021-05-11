@@ -1,5 +1,6 @@
 import React, { useEffect, Dispatch, SetStateAction } from "react";
 import { useParams, useHistory } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 
 import {
   EuiBreadcrumb,
@@ -16,6 +17,9 @@ import {
   EuiIcon,
 } from "@elastic/eui";
 import { euiPaletteColorBlindBehindText } from "@elastic/eui/lib/services";
+
+import { RootState } from "state";
+import { fetchDataset } from "state/datasets/dataset";
 
 import LabelBadge from "./LabelBadge";
 
@@ -40,6 +44,11 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
 
   const { dataset_id: datasetID } = useParams<any>();
   const history = useHistory();
+  const dispatch = useDispatch();
+
+  const { data: dataset, pending } = useSelector(
+    (state: RootState) => state.dataset
+  );
 
   useEffect(() => {
     setBreadcrumbs([
@@ -58,15 +67,36 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
     setRightHeader([]);
   }, [setBreadcrumbs, setRightHeader, history, datasetID]);
 
-  const booleanLabels = ["News", "Analysis", "Post"];
+  useEffect(() => {
+    dispatch(fetchDataset(datasetID));
+  }, [dispatch, datasetID]);
+
+  const booleanLabels = dataset
+    ? dataset.labels
+        .filter((label) => label.variant === "boolean")
+        .map((label) => label.name)
+    : [];
   const booleanLabelsGroup = generateLabelsGroup(booleanLabels);
 
-  const numericalLabels = ["Confidence", "Sentiment"];
+  const numericalLabels = dataset
+    ? dataset.labels
+        .filter((label) => label.variant === "numerical")
+        .map((label) => label.name)
+    : [];
   const numericalLabelsGroup = generateLabelsGroup(numericalLabels);
 
   const goToLabeling = () => history.push(`/datasets/${datasetID}/labeling`);
 
-  return (
+  const loadingEl = (
+    <React.Fragment>
+      <EuiSpacer style={{ minWidth: 300 }} size="l" />
+      <EuiProgress size="s" />
+    </React.Fragment>
+  );
+
+  return pending || dataset === undefined ? (
+    loadingEl
+  ) : (
     <React.Fragment>
       <EuiSpacer size="l" />
       <EuiTitle size="m">
@@ -80,17 +110,14 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
             iconColor="primary"
             style={{ marginRight: "1em" }}
           />
-          Reddit Investing Submissions 2021
+          {dataset.name}
         </h1>
       </EuiTitle>
 
       <EuiSpacer size="m" />
 
-      <EuiText>
-        <p>
-          Submissions from various investing-related subreddits from January to
-          April 2021.
-        </p>
+      <EuiText style={{ textAlign: "center" }}>
+        <p>{dataset.description}</p>
       </EuiText>
 
       <EuiSpacer size="xl" />
@@ -148,14 +175,19 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
       <div style={{ position: "relative", maxWidth: 350, margin: "auto" }}>
         <EuiCard
           icon={<EuiIcon size="xl" type="partial" />}
-          title="87% Labeled"
+          title={`${Math.floor(dataset.labeled_percent * 100)}% Labeled`}
           description={
             <EuiButton color="primary" onClick={goToLabeling}>
               Continue
             </EuiButton>
           }
         />
-        <EuiProgress size="s" max={100} value={87} position="absolute" />
+        <EuiProgress
+          size="s"
+          max={100}
+          value={dataset.labeled_percent * 100}
+          position="absolute"
+        />
       </div>
     </React.Fragment>
   );
