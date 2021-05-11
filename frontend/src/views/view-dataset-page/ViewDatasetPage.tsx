@@ -62,6 +62,8 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
   const numericalLabels = ["Confidence", "Sentiment"];
   const numericalLabelsGroup = generateLabelsGroup(numericalLabels);
 
+  const goToLabeling = () => history.push(`/datasets/${datasetID}/labeling`);
+
   return (
     <React.Fragment>
       <EuiSpacer size="l" />
@@ -93,7 +95,7 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
 
       <EuiFlexGroup justifyContent="center" gutterSize="m">
         <EuiFlexItem grow={false}>
-          <EuiButton color="primary" onClick={() => {}} iconType="tag">
+          <EuiButton color="primary" onClick={goToLabeling} iconType="tag">
             Label samples
           </EuiButton>
         </EuiFlexItem>
@@ -145,7 +147,11 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
         <EuiCard
           icon={<EuiIcon size="xl" type="partial" />}
           title="87% Labeled"
-          description={<EuiButton color="primary">Continue</EuiButton>}
+          description={
+            <EuiButton color="primary" onClick={goToLabeling}>
+              Continue
+            </EuiButton>
+          }
         />
         <EuiProgress size="s" max={100} value={87} position="absolute" />
       </div>

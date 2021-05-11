@@ -12,6 +12,7 @@ import {
 import ViewDatasetsPage from "./view-datasets-page/ViewDatasetsPage";
 import ViewDatasetPage from "./view-dataset-page/ViewDatasetPage";
 import CreateDatasetPage from "./create-dataset-page/CreateDatasetPage";
+import LabelSamplesPage from "./label-samples-page/LabelSamplesPage";
 
 import Header from "./components/Header";
 
@@ -45,10 +46,14 @@ const Router: React.FC = () => {
                 <Route path="/datasets/create" exact>
                   <CreateDatasetPage setBreadcrumbs={setBreadcrumbs} />
                 </Route>
-                <Route path="/datasets/:dataset_id">
+
+                <Route path="/datasets/:dataset_id" exact>
                   <ViewDatasetPage setBreadcrumbs={setBreadcrumbs} />
                 </Route>
-                <Route path="/datasets/:dataset_id/label" />
+
+                <Route path="/datasets/:dataset_id/labeling" exact>
+                  <LabelSamplesPage setBreadcrumbs={setBreadcrumbs} />
+                </Route>
               </Switch>
             </EuiPageContentBody>
           </EuiPageContent>
