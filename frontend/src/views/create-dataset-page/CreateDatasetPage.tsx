@@ -25,6 +25,7 @@ import {
 
 interface IProps {
   setBreadcrumbs: Dispatch<SetStateAction<EuiBreadcrumb[]>>;
+  setRightHeader: Dispatch<SetStateAction<JSX.Element[]>>;
 }
 
 enum Tabs {
@@ -34,7 +35,7 @@ enum Tabs {
 }
 
 const CreateDatasetPage: React.FC<IProps> = (props) => {
-  const { setBreadcrumbs } = props;
+  const { setBreadcrumbs, setRightHeader } = props;
   const [tab, setTab] = useState(Tabs.metadata);
   const [boolPopOpen, setBoolPopOpen] = useState(false);
   const [numPopOpen, setNumPopOpen] = useState(false);
@@ -55,7 +56,8 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
         text: "Create",
       },
     ]);
-  }, [setBreadcrumbs, history]);
+    setRightHeader([]);
+  }, [setBreadcrumbs, setRightHeader, history]);
 
   const isTabActive = (mode: Tabs) => mode === tab;
   const getFormRowStyles = (mode: Tabs) =>

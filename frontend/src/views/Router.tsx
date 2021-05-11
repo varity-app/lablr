@@ -18,10 +18,11 @@ import Header from "./components/Header";
 
 const Router: React.FC = () => {
   const [breadcrumbs, setBreadcrumbs] = useState<EuiBreadcrumb[]>([]);
+  const [rightHeader, setRightHeader] = useState<JSX.Element[]>([]);
 
   return (
     <BrowserRouter>
-      <Header breadcrumbs={breadcrumbs} />
+      <Header breadcrumbs={breadcrumbs} rightSection={rightHeader} />
 
       <EuiPage paddingSize="none">
         <EuiPageBody panelled panelProps={{ hasShadow: false }}>
@@ -40,19 +41,31 @@ const Router: React.FC = () => {
                 </Route>
 
                 <Route path="/datasets" exact>
-                  <ViewDatasetsPage setBreadcrumbs={setBreadcrumbs} />
+                  <ViewDatasetsPage
+                    setBreadcrumbs={setBreadcrumbs}
+                    setRightHeader={setRightHeader}
+                  />
                 </Route>
 
                 <Route path="/datasets/create" exact>
-                  <CreateDatasetPage setBreadcrumbs={setBreadcrumbs} />
+                  <CreateDatasetPage
+                    setBreadcrumbs={setBreadcrumbs}
+                    setRightHeader={setRightHeader}
+                  />
                 </Route>
 
                 <Route path="/datasets/:dataset_id" exact>
-                  <ViewDatasetPage setBreadcrumbs={setBreadcrumbs} />
+                  <ViewDatasetPage
+                    setBreadcrumbs={setBreadcrumbs}
+                    setRightHeader={setRightHeader}
+                  />
                 </Route>
 
                 <Route path="/datasets/:dataset_id/labeling" exact>
-                  <LabelSamplesPage setBreadcrumbs={setBreadcrumbs} />
+                  <LabelSamplesPage
+                    setBreadcrumbs={setBreadcrumbs}
+                    setRightHeader={setRightHeader}
+                  />
                 </Route>
               </Switch>
             </EuiPageContentBody>

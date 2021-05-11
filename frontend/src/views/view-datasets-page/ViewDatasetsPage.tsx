@@ -16,10 +16,11 @@ import {
 
 interface IProps {
   setBreadcrumbs: Dispatch<SetStateAction<EuiBreadcrumb[]>>;
+  setRightHeader: Dispatch<SetStateAction<JSX.Element[]>>;
 }
 
 const ViewDatasetPage: React.FC<IProps> = (props) => {
-  const { setBreadcrumbs } = props;
+  const { setBreadcrumbs, setRightHeader } = props;
 
   const history = useHistory();
 
@@ -29,7 +30,8 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
         text: "Datasets",
       },
     ]);
-  }, [setBreadcrumbs]);
+    setRightHeader([]);
+  }, [setBreadcrumbs, setRightHeader]);
 
   return (
     <div style={{ textAlign: "center" }}>

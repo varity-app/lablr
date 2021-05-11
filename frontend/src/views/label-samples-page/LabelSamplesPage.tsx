@@ -19,10 +19,12 @@ import {
   EuiButton,
   EuiButtonIcon,
   EuiToolTip,
+  EuiProgress,
 } from "@elastic/eui";
 
 interface IProps {
   setBreadcrumbs: Dispatch<SetStateAction<EuiBreadcrumb[]>>;
+  setRightHeader: Dispatch<SetStateAction<JSX.Element[]>>;
 }
 
 const DUMBY_TEXT = `
@@ -60,7 +62,7 @@ const INITIAL_OPTIONS = [
 ];
 
 const LabelSamplesPage: React.FC<IProps> = (props) => {
-  const { setBreadcrumbs } = props;
+  const { setBreadcrumbs, setRightHeader } = props;
 
   const [options, setOptions] = useState<EuiSelectableOption[]>(
     INITIAL_OPTIONS
@@ -114,7 +116,20 @@ const LabelSamplesPage: React.FC<IProps> = (props) => {
         text: "Labeling",
       },
     ]);
-  }, [setBreadcrumbs, history, datasetID]);
+    setRightHeader([
+      <div>
+        <EuiProgress
+          label="3.2k / 10k Labeled"
+          valueText
+          max={100}
+          value={32}
+          color="success"
+          size="s"
+          style={{ minWidth: 200 }}
+        />
+      </div>,
+    ]);
+  }, [setBreadcrumbs, setRightHeader, history, datasetID]);
 
   return (
     <React.Fragment>

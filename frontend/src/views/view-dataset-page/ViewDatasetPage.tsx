@@ -21,6 +21,7 @@ import LabelBadge from "./LabelBadge";
 
 interface IProps {
   setBreadcrumbs: Dispatch<SetStateAction<EuiBreadcrumb[]>>;
+  setRightHeader: Dispatch<SetStateAction<JSX.Element[]>>;
 }
 
 const generateLabelsGroup = (labels: string[]) =>
@@ -35,7 +36,7 @@ const generateLabelsGroup = (labels: string[]) =>
     ));
 
 const ViewDatasetPage: React.FC<IProps> = (props) => {
-  const { setBreadcrumbs } = props;
+  const { setBreadcrumbs, setRightHeader } = props;
 
   const { dataset_id: datasetID } = useParams<any>();
   const history = useHistory();
@@ -54,7 +55,8 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
         text: datasetID,
       },
     ]);
-  }, [setBreadcrumbs, history, datasetID]);
+    setRightHeader([]);
+  }, [setBreadcrumbs, setRightHeader, history, datasetID]);
 
   const booleanLabels = ["News", "Analysis", "Post"];
   const booleanLabelsGroup = generateLabelsGroup(booleanLabels);
