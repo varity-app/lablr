@@ -58,9 +58,14 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
       <EuiFlexGroup>
         <EuiFlexItem>
           {pending ? (
-            <EuiLoadingContent style={{ minWidth: 500, maxWidth: 1000, margin: "auto" }} lines={3} />
+            <EuiLoadingContent
+              style={{ minWidth: 500, maxWidth: 1000, margin: "auto" }}
+              lines={3}
+            />
           ) : (
-            <EuiListGroup style={{ minWidth: 500, maxWidth: 1000, margin: "auto" }}>
+            <EuiListGroup
+              style={{ minWidth: 500, maxWidth: 1000, margin: "auto" }}
+            >
               {datasets.map((dataset) => (
                 <EuiListGroupItem
                   key={dataset.dataset_id}

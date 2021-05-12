@@ -1,6 +1,6 @@
-import React, { useEffect, Dispatch, SetStateAction } from "react";
+import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { useParams, useHistory } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 import {
   EuiBreadcrumb,
@@ -15,11 +15,12 @@ import {
   EuiCard,
   EuiProgress,
   EuiIcon,
+  EuiConfirmModal,
 } from "@elastic/eui";
 import { euiPaletteColorBlindBehindText } from "@elastic/eui/lib/services";
 
-import { RootState } from "state";
-import { fetchDataset } from "state/datasets/dataset";
+import { RootState, useAppDispatch } from "state";
+import { fetchDataset, deleteDataset } from "state/datasets/dataset";
 
 import LabelBadge from "./LabelBadge";
 
@@ -42,9 +43,11 @@ const generateLabelsGroup = (labels: string[]) =>
 const ViewDatasetPage: React.FC<IProps> = (props) => {
   const { setBreadcrumbs, setRightHeader } = props;
 
-  const { dataset_id: datasetID } = useParams<any>();
+  const { dataset_id: datasetID } = useParams<{ [param: string]: string }>();
   const history = useHistory();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
+
+  const [confirm, setConfirm] = useState(false);
 
   const { data: dataset, pending } = useSelector(
     (state: RootState) => state.dataset
@@ -86,6 +89,13 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
   const numericalLabelsGroup = generateLabelsGroup(numericalLabels);
 
   const goToLabeling = () => history.push(`/datasets/${datasetID}/labeling`);
+
+  // Delete dataset
+  const deleteDS = () => {
+    dispatch(deleteDataset(datasetID)).then(() => {
+      history.push("/datasets");
+    });
+  };
 
   const loadingEl = (
     <React.Fragment>
@@ -129,17 +139,43 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
         </EuiFlexItem>
 
         <EuiFlexItem grow={false}>
-          <EuiButton color="text" onClick={() => {}} iconType="download">
+          <EuiButton
+            color="text"
+            onClick={() => {}}
+            iconType="download"
+            href={`/api/v1/datasets/${datasetID}/export`}
+          >
             Export labels
           </EuiButton>
         </EuiFlexItem>
 
         <EuiFlexItem grow={false}>
-          <EuiButton color="danger" onClick={() => {}} iconType="trash">
+          <EuiButton
+            color="danger"
+            onClick={() => setConfirm(true)}
+            iconType="trash"
+          >
             Delete dataset
           </EuiButton>
         </EuiFlexItem>
       </EuiFlexGroup>
+
+      {confirm ? (
+        <EuiConfirmModal
+          title="Delete dataset"
+          onCancel={() => setConfirm(false)}
+          onConfirm={deleteDS}
+          buttonColor="danger"
+          cancelButtonText="No, don't do it"
+          confirmButtonText="Yes, do it"
+          maxWidth
+        >
+          <p>
+            Are you sure you want to permanently delete the dataset{" "}
+            <strong>{dataset.name}</strong> and all its labels?
+          </p>
+        </EuiConfirmModal>
+      ) : null}
 
       <EuiSpacer size="l" />
 
@@ -175,9 +211,14 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
         <EuiCard
           icon={<EuiIcon size="xl" type="partial" />}
           title={`${Math.floor(dataset.labeled_percent * 100)}% Labeled`}
-          description={ dataset.labeled_percent === 1 ? "" : (<EuiButton color="primary" onClick={goToLabeling}>
-              Continue
-            </EuiButton>)
+          description={
+            dataset.labeled_percent === 1 ? (
+              ""
+            ) : (
+              <EuiButton color="primary" onClick={goToLabeling}>
+                Continue
+              </EuiButton>
+            )
           }
         />
         <EuiProgress

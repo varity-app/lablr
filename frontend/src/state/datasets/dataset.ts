@@ -17,6 +17,14 @@ export const fetchDataset = createAsyncThunk(
   }
 );
 
+export const deleteDataset = createAsyncThunk(
+  "/datasets/deleteDataset",
+  async (datasetID: string) => {
+    await axios.delete(`${API_PREFIX}/datasets/${datasetID}`);
+    return {};
+  }
+);
+
 const datasetSlice = createSlice<State, {}, "datasets">({
   name: "datasets",
   initialState: {
@@ -33,6 +41,18 @@ const datasetSlice = createSlice<State, {}, "datasets">({
       state.pending = false;
     });
     builder.addCase(fetchDataset.rejected, (state, { payload }) => {
+      state.pending = false;
+      console.log(payload);
+    });
+
+    // Delete Dataset
+    builder.addCase(deleteDataset.pending, (state) => {
+      state.pending = true;
+    });
+    builder.addCase(deleteDataset.fulfilled, (state, action) => {
+      state.pending = false;
+    });
+    builder.addCase(deleteDataset.rejected, (state, { payload }) => {
       state.pending = false;
       console.log(payload);
     });

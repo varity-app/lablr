@@ -29,7 +29,9 @@ const BottomBar: React.FC<IProps> = (props) => {
     onResetHistory,
   } = props;
 
-  const { history: sampleHistory, data: sample } = useSelector((state: RootState) => state.sample);
+  const { history: sampleHistory, data: sample } = useSelector(
+    (state: RootState) => state.sample
+  );
 
   return (
     <EuiBottomBar>

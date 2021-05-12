@@ -234,28 +234,40 @@ const LabelSamplesPage: React.FC<IProps> = (props) => {
   }, [dataset, sample]);
 
   const bottomBar = (
-      <BottomBar
-        historyIdx={historyIdx}
-        saveAndContinue={saveAndContinue}
-        nextSample={nextSample}
-        prevSample={prevSample}
-        onResetHistory={() => {
-          setHistoryIdx(0);
-          dispatch(resetHistory());
-        }}
-      />
-  )
+    <BottomBar
+      historyIdx={historyIdx}
+      saveAndContinue={saveAndContinue}
+      nextSample={nextSample}
+      prevSample={prevSample}
+      onResetHistory={() => {
+        setHistoryIdx(0);
+        dispatch(resetHistory());
+      }}
+    />
+  );
 
-  if (!datasetPending && !samplePending && dataset !== undefined && metadata && metadata.pagination.next_offset === null)
+  if (
+    !datasetPending &&
+    !samplePending &&
+    dataset !== undefined &&
+    metadata &&
+    metadata.pagination.next_offset === null
+  )
     return (
       <React.Fragment>
-        <div style={{ textAlign: "center" }}> <EuiIcon size="xxl" type="check" color="success" /></div>
+        <div style={{ textAlign: "center" }}>
+          {" "}
+          <EuiIcon size="xxl" type="check" color="success" />
+        </div>
         <EuiText>
-          <p style={{ textAlign: "center" }}>No further samples to label.  If the dataset is not 100% labeled, try reseting the history.</p>
+          <p style={{ textAlign: "center" }}>
+            No further samples to label. If the dataset is not 100% labeled, try
+            reseting the history.
+          </p>
         </EuiText>
         {bottomBar}
       </React.Fragment>
-    )
+    );
 
   return (
     <React.Fragment>
