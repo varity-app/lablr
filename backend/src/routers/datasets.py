@@ -8,8 +8,7 @@ from io import StringIO
 import csv
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from sqlalchemy.orm import Session
 
@@ -225,9 +224,7 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
     return db_dataset
 
 
-@router.get(
-    "/datasets/{dataset_id}/export", response_class=PlainTextResponse, tags=["datasets"]
-)
+@router.get("/datasets/{dataset_id}/export", response_class=Response, tags=["datasets"])
 def export_labels(dataset_id, db_session: Session = Depends(get_db)):
     """Export a dataset's labels in CSV format"""
 
@@ -257,7 +254,6 @@ def export_labels(dataset_id, db_session: Session = Depends(get_db)):
             id=db_sample.original_id,
             **db_sample.labels,
         )
-        print(body)
         writer.writerow(body)
 
-    return output.getvalue()
+    return Response(content=output.getvalue(), media_type="text/csv")
