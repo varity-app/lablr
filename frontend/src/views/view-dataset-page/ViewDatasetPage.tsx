@@ -98,7 +98,6 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
     loadingEl
   ) : (
     <React.Fragment>
-      <EuiSpacer size="l" />
       <EuiTitle size="m">
         <h1 style={{ textAlign: "center" }}>
           <EuiAvatar
@@ -153,11 +152,11 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
       <EuiSpacer size="m" />
 
       <EuiFlexGroup justifyContent="center">
-        <EuiFlexItem grow={1} style={{ maxWidth: 500 }}>
+        <EuiFlexItem grow={1} style={{ maxWidth: 300 }}>
           <EuiCard title="Boolean" description={booleanLabelsGroup} />
         </EuiFlexItem>
 
-        <EuiFlexItem grow={1}>
+        <EuiFlexItem grow={1} style={{ maxWidth: 300 }}>
           <EuiCard title="Numerical" description={numericalLabelsGroup} />
         </EuiFlexItem>
       </EuiFlexGroup>
@@ -176,10 +175,9 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
         <EuiCard
           icon={<EuiIcon size="xl" type="partial" />}
           title={`${Math.floor(dataset.labeled_percent * 100)}% Labeled`}
-          description={
-            <EuiButton color="primary" onClick={goToLabeling}>
+          description={ dataset.labeled_percent === 1 ? "" : (<EuiButton color="primary" onClick={goToLabeling}>
               Continue
-            </EuiButton>
+            </EuiButton>)
           }
         />
         <EuiProgress

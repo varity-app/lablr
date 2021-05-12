@@ -13,7 +13,7 @@ import {
   EuiFlexItem,
   EuiHorizontalRule,
   EuiButton,
-  EuiProgress,
+  EuiLoadingContent,
 } from "@elastic/eui";
 
 import { RootState } from "state";
@@ -49,7 +49,6 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
 
   return (
     <div style={{ textAlign: "center" }}>
-      <EuiSpacer size="l" />
       <EuiTitle size="l">
         <h1 style={{ textAlign: "center" }}>Datasets</h1>
       </EuiTitle>
@@ -59,9 +58,9 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
       <EuiFlexGroup>
         <EuiFlexItem>
           {pending ? (
-            <EuiProgress size="s" />
+            <EuiLoadingContent style={{ minWidth: 500, maxWidth: 1000, margin: "auto" }} lines={3} />
           ) : (
-            <EuiListGroup style={{ minWidth: 500, maxWidth: 1000 }}>
+            <EuiListGroup style={{ minWidth: 500, maxWidth: 1000, margin: "auto" }}>
               {datasets.map((dataset) => (
                 <EuiListGroupItem
                   key={dataset.dataset_id}

@@ -3,3 +3,7 @@
 html {
   background-color: #fff;
 }
+
+body {
+  overflow-x: clip;
+}
