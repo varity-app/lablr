@@ -96,7 +96,10 @@ async def get_dataset(dataset_id, db_session: Session = Depends(get_db)):
 
     samples_count = query.count()
     labeled_count = query.filter(sample.Sample.labels.isnot(None)).count()
-    labeled_percent = float(labeled_count) / samples_count
+
+    labeled_percent = 1  # 100% labeled if there are zero samples to begin with
+    if samples_count > 0:
+        labeled_percent = float(labeled_count) / samples_count
 
     response = dict(
         dataset_id=db_dataset.dataset_id,
@@ -152,8 +155,6 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
     )
     db_session.add(db_dataset)
     db_session.commit()
-
-    logger.warn(data.csv64)
 
     # Create label definitions
     db_labels = []
