@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { useHistory } from "react-router-dom";
+import { useFormik } from "formik";
 
 import {
   EuiTitle,
@@ -7,21 +8,13 @@ import {
   EuiBreadcrumb,
   EuiStepsHorizontal,
   EuiPanel,
-  EuiFieldText,
   EuiForm,
-  EuiFormRow,
-  EuiFilePicker,
-  EuiSelect,
-  EuiButton,
-  EuiPopover,
-  EuiFlexGroup,
-  EuiFlexItem,
-  EuiFieldNumber,
-  EuiListGroup,
-  EuiListGroupItem,
-  EuiAvatar,
-  EuiBadge,
 } from "@elastic/eui";
+
+import { FormValues, FormErrors } from "./types";
+import MetadataTab from "./MetadataTab";
+import FieldsTab from "./FieldsTab";
+import LabelsTab from "./LabelsTab";
 
 interface IProps {
   setBreadcrumbs: Dispatch<SetStateAction<EuiBreadcrumb[]>>;
@@ -34,14 +27,44 @@ enum Tabs {
   labels,
 }
 
+const validate = (values: FormValues) => {
+  const errors: FormErrors = {};
+  if (!values.name) {
+    errors.name = "Required";
+  }
+
+  if (!values.description) {
+    errors.description = "Required";
+  }
+
+  if (!values.file) {
+    errors.file = "Required";
+  }
+
+  if (!values.id_field) {
+    errors.id_field = "Required";
+  }
+
+  if (!values.text_field) {
+    errors.text_field = "Required";
+  }
+
+  if (!values.labels.length) {
+    errors.labels = "Must specify at least one label";
+  }
+
+  return errors;
+};
+
 const CreateDatasetPage: React.FC<IProps> = (props) => {
   const { setBreadcrumbs, setRightHeader } = props;
+
   const [tab, setTab] = useState(Tabs.metadata);
-  const [boolPopOpen, setBoolPopOpen] = useState(false);
-  const [numPopOpen, setNumPopOpen] = useState(false);
+  const [fields, setFields] = useState<string[]>([]); // CSV fields/columns
 
   const history = useHistory();
 
+  // Set Header elements
   useEffect(() => {
     setBreadcrumbs([
       {
@@ -59,14 +82,10 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
     setRightHeader([]);
   }, [setBreadcrumbs, setRightHeader, history]);
 
+  // Helper method to check active tab
   const isTabActive = (mode: Tabs) => mode === tab;
-  const getFormRowStyles = (mode: Tabs) =>
-    !isTabActive(mode)
-      ? {
-          display: "none",
-        }
-      : {};
 
+  // Steps element
   const horizontalSteps = [
     {
       title: "Metadata",
@@ -88,6 +107,28 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
     },
   ];
 
+  const {
+    handleSubmit,
+    handleChange,
+    handleBlur,
+    touched,
+    values, // use this if you want controlled components
+    errors,
+  } = useFormik({
+    initialValues: {
+      name: "",
+      description: "",
+      file: "",
+      id_field: "",
+      text_field: "",
+      labels: [],
+    },
+    validate,
+    onSubmit: (values) => {
+      console.log(JSON.stringify(values));
+    },
+  });
+
   return (
     <React.Fragment>
       <EuiSpacer size="l" />
@@ -99,185 +140,27 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
 
       <EuiSpacer size="l" />
 
-      <EuiPanel style={{ minWidth: 420 }}>
+      <EuiPanel style={{ width: 420, margin: "auto" }}>
         <EuiForm component="form">
-          <EuiFormRow
-            style={getFormRowStyles(Tabs.metadata)}
-            label="Display Name"
-            helpText="Displayed name of the dataset."
-          >
-            <EuiFieldText name="name" />
-          </EuiFormRow>
+          <MetadataTab
+            handleChange={handleChange}
+            handleBlur={handleBlur}
+            setFields={setFields}
+            values={values}
+            errors={errors}
+            touched={touched}
+            hidden={!isTabActive(Tabs.metadata)}
+          />
 
-          <EuiFormRow
-            style={getFormRowStyles(Tabs.metadata)}
-            label="Description"
-            helpText="A brief description of the dataset."
-          >
-            <EuiFieldText name="description" />
-          </EuiFormRow>
+          <FieldsTab
+            // handleChange={handleChange}
+            hidden={!isTabActive(Tabs.fields)}
+          />
 
-          <EuiFormRow
-            style={getFormRowStyles(Tabs.metadata)}
-            label="File picker"
-          >
-            <EuiFilePicker initialPromptText="Select or drag and drop a CSV file" />
-          </EuiFormRow>
-
-          <EuiFormRow
-            style={getFormRowStyles(Tabs.fields)}
-            label="ID Field"
-            helpText="Column in the CSV that specifies the ID of each sample."
-          >
-            <EuiSelect
-              name="id_field"
-              options={[
-                { value: "yeet", text: "yeet" },
-                { value: "wheat", text: "wheat" },
-                { value: "bleep", text: "bleep" },
-              ]}
-            />
-          </EuiFormRow>
-
-          <EuiFormRow
-            style={getFormRowStyles(Tabs.fields)}
-            label="Text Field"
-            helpText="Column in the CSV that specifies the text that will be labeled."
-          >
-            <EuiSelect
-              name="text_field"
-              options={[
-                { value: "wheat", text: "wheat" },
-                { value: "bleep", text: "bleep" },
-                { value: "yeet", text: "yeet" },
-              ]}
-            />
-          </EuiFormRow>
-
-          <EuiFlexGroup
-            style={getFormRowStyles(Tabs.labels)}
-            gutterSize="s"
-            responsive={false}
-          >
-            <EuiFlexItem>
-              <EuiPopover
-                button={
-                  <EuiButton
-                    iconType="arrowDown"
-                    iconSide="right"
-                    onClick={() => setBoolPopOpen(!boolPopOpen)}
-                    color="primary"
-                    aria-label="Add boolean label"
-                  >
-                    Add Boolean Label
-                  </EuiButton>
-                }
-                isOpen={boolPopOpen}
-                closePopover={() => setBoolPopOpen(false)}
-              >
-                <div style={{ width: 300 }}>
-                  <EuiForm component="form">
-                    <EuiFlexGroup>
-                      <EuiFlexItem>
-                        <EuiFormRow label="Name">
-                          <EuiFieldText />
-                        </EuiFormRow>
-                      </EuiFlexItem>
-
-                      <EuiFlexItem grow={false}>
-                        <EuiFormRow hasEmptyLabelSpace>
-                          <EuiButton>Add</EuiButton>
-                        </EuiFormRow>
-                      </EuiFlexItem>
-                    </EuiFlexGroup>
-                  </EuiForm>
-                </div>
-              </EuiPopover>
-            </EuiFlexItem>
-
-            <EuiFlexItem>
-              <EuiPopover
-                button={
-                  <EuiButton
-                    iconType="arrowDown"
-                    iconSide="right"
-                    onClick={() => setNumPopOpen(!numPopOpen)}
-                    color="danger"
-                    aria-label="Add numerical label"
-                  >
-                    Add Numerical Label
-                  </EuiButton>
-                }
-                isOpen={numPopOpen}
-                closePopover={() => setNumPopOpen(false)}
-              >
-                <div style={{ width: 400 }}>
-                  <EuiForm component="form">
-                    <EuiFormRow label="Name">
-                      <EuiFieldText name="name" />
-                    </EuiFormRow>
-
-                    <EuiSpacer size="m" />
-
-                    <EuiFlexGroup>
-                      <EuiFlexItem grow={1}>
-                        <EuiFormRow label="Minimum">
-                          <EuiFieldNumber name="minimum" min={-10} max={10} />
-                        </EuiFormRow>
-                      </EuiFlexItem>
-
-                      <EuiFlexItem grow={1}>
-                        <EuiFormRow label="Maximum">
-                          <EuiFieldNumber name="maximum" min={-10} max={10} />
-                        </EuiFormRow>
-                      </EuiFlexItem>
-
-                      <EuiFlexItem grow={1}>
-                        <EuiFormRow label="Interval">
-                          <EuiFieldNumber name="interval" min={-10} max={10} />
-                        </EuiFormRow>
-                      </EuiFlexItem>
-                    </EuiFlexGroup>
-
-                    <EuiFormRow hasEmptyLabelSpace>
-                      <EuiButton>Add</EuiButton>
-                    </EuiFormRow>
-                  </EuiForm>
-                </div>
-              </EuiPopover>
-            </EuiFlexItem>
-          </EuiFlexGroup>
-
-          <EuiListGroup style={getFormRowStyles(Tabs.labels)}>
-            <EuiSpacer size="m" />
-            <EuiListGroupItem
-              icon={<EuiAvatar size="s" type="space" name="News" />}
-              label={
-                <span>
-                  News <EuiBadge color="primary">boolean</EuiBadge>
-                </span>
-              }
-              extraAction={{
-                iconType: "trash",
-                alwaysShow: true,
-                "aria-label": "Delete label",
-              }}
-            />
-            <EuiListGroupItem
-              icon={<EuiAvatar size="s" type="space" name="Confidence" />}
-              label={
-                <span>
-                  Confidence{" "}
-                  <EuiBadge color="danger">numerical (0, 1, 0.5)</EuiBadge>
-                </span>
-              }
-              extraAction={{
-                iconType: "trash",
-                alwaysShow: true,
-                "aria-label": "Delete label",
-              }}
-            />
-          </EuiListGroup>
+          <LabelsTab
+            // handleChange={handleChange}
+            hidden={!isTabActive(Tabs.labels)}
+          />
         </EuiForm>
       </EuiPanel>
     </React.Fragment>
