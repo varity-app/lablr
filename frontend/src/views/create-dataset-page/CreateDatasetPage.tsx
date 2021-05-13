@@ -227,6 +227,7 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
         {!isTabActive(Tabs.labels) ? null : (
           <EuiFlexItem grow={false}>
             <EuiButton
+              fill
               disabled={!validMetadata || !validFields || !validLabels}
               onClick={() => handleSubmit()}
             >

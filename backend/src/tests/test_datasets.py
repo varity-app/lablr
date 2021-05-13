@@ -24,9 +24,6 @@ EXAMPLE_DATASET_BODY = {
             "interval": 0.5,
         },
     ],
-    "id_field": "id",
-    "text_field": "text",
-    "csv64": "aWQsdGV4dAoxLHNrZWV0CjIsd2hlYXQK",
 }
 
 
@@ -69,26 +66,12 @@ def test_create_delete_dataset():
 def test_create_missing_fields_dataset():
     """Unit test for creating a dataset with missing important fields"""
 
-    for field in ["name", "description", "id_field", "text_field", "csv64"]:
+    for field in ["name", "description", "labels"]:
         body = EXAMPLE_DATASET_BODY.copy()
         del body[field]
 
         response = client.post(f"{PREFIX}/datasets", json=body)
         assert response.status_code == 422
-
-
-def test_create_invalid_csv64_dataset():
-    """Unit test for creating a dataset with an invalid csv64 field"""
-
-    body = EXAMPLE_DATASET_BODY.copy()
-    body["csv64"] = "this is not base64 encoded"
-
-    response = client.post(f"{PREFIX}/datasets", json=body)
-
-    assert response.status_code == 422
-    assert (
-        response.json()["detail"] == "Field csv64 does not have a valid base64 encoding"
-    )
 
 
 def test_delete_nonexistent_dataset():
@@ -97,19 +80,3 @@ def test_delete_nonexistent_dataset():
     response = client.delete(f"{PREFIX}/datasets/daflkadsjflkajdflkadfadadfadsfad")
 
     assert response.status_code == 404
-
-
-def test_create_invalid_label_dataset():
-    """Unit test for attempting to create a dataset with an invalid label definition"""
-    body = EXAMPLE_DATASET_BODY.copy()
-
-    body["labels"] = [
-        {
-            "name": "Invalid label",
-            "variant": "nosuchthing",
-        }
-    ]
-
-    response = client.post(f"{PREFIX}/datasets", json=body)
-
-    assert response.status_code == 422

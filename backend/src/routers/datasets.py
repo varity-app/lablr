@@ -13,7 +13,6 @@ from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from sqlalchemy.orm import Session
 
 from database import dataset, label_definition, sample, get_db
-from util.base64 import decode_b64string  # pylint: disable=no-name-in-module
 from util.constants import LabelVariants
 
 router = APIRouter()
@@ -64,10 +63,7 @@ class DatasetGetOne(DatasetGet):
 class DatasetCreate(Dataset):
     """Schema of request body for creating a dataset"""
 
-    id_field: str
-    text_field: str
     labels: List[LabelDefinition]
-    csv64: str  # Base64 encoded string of the CSV that forms the upload
 
 
 @router.get("/datasets", response_model=List[DatasetGet], tags=["datasets"])
@@ -182,50 +178,13 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
 
     db_session.commit()
 
-    # Decode csv64 field
-    try:
-        csv_string = decode_b64string(data.csv64)
-    except ValueError as error:
-        db_session.delete(db_dataset)
-        for db_label in db_labels:
-            db_session.delete(db_label)
-        db_session.commit()
-        raise HTTPException(
-            status_code=422, detail="Field csv64 does not have a valid base64 encoding"
-        ) from error
-
-    # Read CSV
-    csv_f = StringIO(csv_string)
-    reader = csv.DictReader(csv_f, delimiter=",")
-
-    # Check that id and text fields are valid
-    for field in (data.id_field, data.text_field):
-        if field not in reader.fieldnames:
-            db_session.delete(db_dataset)
-            for db_label in db_labels:
-                db_session.delete(db_label)
-            db_session.commit()
-            raise HTTPException(
-                status_code=422, detail=f"Field {field} not found in provided CSV"
-            )
-
-    # Create samples in DB
-    for row in reader:
-        db_sample = sample.Sample(
-            dataset_id=db_dataset.dataset_id,
-            original_id=row[data.id_field],
-            text=row[data.text_field],
-        )
-        db_session.add(db_sample)
-
-    db_session.commit()
     db_session.refresh(db_dataset)
 
     return db_dataset
 
 
 @router.get("/datasets/{dataset_id}/export", response_class=Response, tags=["datasets"])
-def export_labels(dataset_id, db_session: Session = Depends(get_db)):
+async def export_labels(dataset_id, db_session: Session = Depends(get_db)):
     """Export a dataset's labels in CSV format"""
 
     db_dataset = (
