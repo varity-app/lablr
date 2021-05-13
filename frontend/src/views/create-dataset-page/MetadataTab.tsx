@@ -38,13 +38,14 @@ const MetadataTab: React.FC<IProps> = (props) => {
 
     const file = files[0];
     const reader = new FileReader();
+
     reader.onload = (event: any) => {
       const content = reader.result as string;
       const header = content ? content.split("\n").shift() : "";
       const fields = header ? header.split(",") : [];
       setFields(fields);
       handleBlur(createFakeEvent("file") as any);
-      handleChange(createFakeEvent("file", content) as any);
+      handleChange(createFakeEvent("file", file) as any);
     };
     reader.readAsText(file);
   };

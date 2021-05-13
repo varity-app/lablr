@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
 import { API_PREFIX } from "config";
-import { DatasetDetailed, DatasetCreate } from "./types";
+import { DatasetDetailed, DatasetCreate, Dataset } from "./types";
 
 interface State {
   data?: DatasetDetailed;
@@ -28,7 +28,8 @@ export const deleteDataset = createAsyncThunk(
 export const createDataset = createAsyncThunk(
   "/datasets/createDataset",
   async (body: DatasetCreate) => {
-    await axios.post(`${API_PREFIX}/datasets`, body);
+    const response = await axios.post(`${API_PREFIX}/datasets`, body);
+    return response.data as Dataset;
   }
 );
 

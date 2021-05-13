@@ -1,6 +1,6 @@
 # Frontend Application
 
-The frontend is built with TypeScript + React + Redux (Toolkit).  The application also utilizes the [Elastic UI](https://elastic.github.io/eui/#) design library.  EUI was chosen because of it's stunning visuals, extensive component library, and data-dense design.
+The frontend is built with TypeScript + React + Redux (Toolkit). The application also utilizes the [Elastic UI](https://elastic.github.io/eui/#) design library. EUI was chosen because of it's stunning visuals, extensive component library, and data-dense design.
 
 ## Available Scripts
 

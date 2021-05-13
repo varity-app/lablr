@@ -3,13 +3,15 @@ Routes related to Dataset objects
 """
 
 from typing import Dict, List, Optional
+from io import StringIO
 import logging
+import csv
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from sqlalchemy.orm import Session
 
-from database import sample, label_definition, get_db
+from database import dataset, sample, label_definition, get_db
 from util.constants import LabelVariants
 
 router = APIRouter()
@@ -113,7 +115,7 @@ def get_samples(
     response_model=Sample,
     tags=["samples"],
 )
-def get_one_sample(dataset_id, sample_id, db_session: Session = Depends(get_db)):
+async def get_one_sample(dataset_id, sample_id, db_session: Session = Depends(get_db)):
     """Get a single sample"""
     db_sample = (
         db_session.query(sample.Sample)
@@ -136,7 +138,7 @@ class SamplePut(BaseModel):
 
 
 @router.put("/datasets/{dataset_id}/samples/{sample_id}", tags=["samples"])
-def label_sample(
+async def label_sample(
     data: SamplePut, dataset_id, sample_id, db_session: Session = Depends(get_db)
 ):
     """Label a sample"""
@@ -196,3 +198,58 @@ def label_sample(
     db_session.commit()
 
     return dict()
+
+
+@router.post("/datasets/{dataset_id}/samples", tags=["samples"])
+async def create_samples(
+    dataset_id,
+    id_field: str = Form(...),
+    text_field: str = Form(...),
+    file: UploadFile = File(...),
+    db_session: Session = Depends(get_db),
+):
+    """Create samples for a given dataset from a CSV file upload."""
+
+    # Fetch dataset
+    db_dataset = (
+        db_session.query(dataset.Dataset).filter_by(dataset_id=dataset_id).first()
+    )
+
+    if db_dataset is None:
+        raise HTTPException(
+            status_code=404, detail=f"No dataset found with id `{dataset_id}`"
+        )
+
+    # Validate file type
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(
+            status_code=422, detail="File provided is not in .csv format."
+        )
+
+    # Read CSV
+    contents = await file.read()
+    contents = StringIO(contents.decode("utf-8"))
+    reader = csv.DictReader(contents, delimiter=",")
+
+    # Check that id and text fields are valid
+    for field in (id_field, text_field):
+        if field not in reader.fieldnames:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Field `{field}` not found in provided CSV.  Must be one of {reader.fieldnames}",
+            )
+
+    # Create samples in DB
+    sample_count = 0
+    for row in reader:
+        db_sample = sample.Sample(
+            dataset_id=db_dataset.dataset_id,
+            original_id=row[id_field],
+            text=row[text_field],
+        )
+        db_session.add(db_sample)
+        sample_count += 1
+
+    db_session.commit()
+
+    return f"Successfully created {sample_count} samples."

@@ -7,10 +7,13 @@ import datasetReducer from "./datasets/dataset";
 
 import sampleReducer from "./samples/sample";
 
+import toastsReducer from "./toasts/toasts";
+
 const rootReducer = combineReducers({
   datasets: datasetsReducer,
   dataset: datasetReducer,
   sample: sampleReducer,
+  toasts: toastsReducer,
 });
 
 const store = configureStore({

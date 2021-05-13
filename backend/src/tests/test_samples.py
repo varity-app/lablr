@@ -2,6 +2,8 @@
 Test samples endpoints
 """
 
+import os
+
 from fastapi.testclient import TestClient
 
 from main import app, PREFIX
@@ -9,6 +11,8 @@ from main import app, PREFIX
 from .test_datasets import EXAMPLE_DATASET_BODY
 
 client = TestClient(app)
+
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 def create_demo_dataset() -> int:
@@ -22,6 +26,18 @@ def create_demo_dataset() -> int:
 
     dataset_id = response.json()["dataset_id"]
 
+    # Create samples
+    data = dict(id_field="id", text_field="text")
+    files = dict(
+        file=("test.csv", open(f"{SCRIPT_DIR}/test_samples.csv", "rb"), "text/csv")
+    )
+
+    response = client.post(
+        f"{PREFIX}/datasets/{dataset_id}/samples", data=data, files=files
+    )
+
+    assert response.status_code == 200
+
     return dataset_id
 
 
@@ -30,6 +46,43 @@ def delete_demo_dataset(dataset_id: int) -> None:
 
     response = client.delete(f"{PREFIX}/datasets/{dataset_id}")
     assert response.status_code == 200
+
+
+def test_create_invalid_samples():
+    """Unit test for attempting to create invalid samples"""
+
+    dataset_id = create_demo_dataset()
+
+    # Invalid fields
+    data = dict(id_field="id_no_existo", text_field="text")
+    files = dict(
+        file=("test.csv", open(f"{SCRIPT_DIR}/test_samples.csv", "rb"), "text/csv")
+    )
+
+    response = client.post(
+        f"{PREFIX}/datasets/{dataset_id}/samples", data=data, files=files
+    )
+
+    assert response.status_code == 422
+
+    data = dict(id_field="id", text_field="text_no_existo")
+    files = dict(
+        file=("test.csv", open(f"{SCRIPT_DIR}/test_samples.csv", "rb"), "text/csv")
+    )
+
+    response = client.post(
+        f"{PREFIX}/datasets/{dataset_id}/samples", data=data, files=files
+    )
+
+    assert response.status_code == 422
+
+
+def test_samples_create():
+    """Unit test for creating a new dataset and uploading new samples"""
+
+    dataset_id = create_demo_dataset()
+
+    delete_demo_dataset(dataset_id)
 
 
 def test_samples_get():

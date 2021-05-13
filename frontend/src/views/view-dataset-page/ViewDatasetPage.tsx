@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { useParams, useHistory } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { unwrapResult } from "@reduxjs/toolkit";
 
 import {
   EuiBreadcrumb,
@@ -21,6 +22,7 @@ import { euiPaletteColorBlindBehindText } from "@elastic/eui/lib/services";
 
 import { RootState, useAppDispatch } from "state";
 import { fetchDataset, deleteDataset } from "state/datasets/dataset";
+import { addToast } from "state/toasts/toasts";
 
 import LabelBadge from "./LabelBadge";
 
@@ -92,9 +94,18 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
 
   // Delete dataset
   const deleteDS = () => {
-    dispatch(deleteDataset(datasetID)).then(() => {
-      history.push("/datasets");
-    });
+    dispatch(deleteDataset(datasetID))
+      .then(unwrapResult)
+      .then(() => {
+        dispatch(
+          addToast({
+            title: `Deleted dataset #${datasetID}`,
+            color: "success",
+            iconType: "trash",
+          })
+        );
+        history.push("/datasets");
+      });
   };
 
   const loadingEl = (
