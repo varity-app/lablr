@@ -1,5 +1,7 @@
 import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { useHistory } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { unwrapResult } from "@reduxjs/toolkit";
 import { useFormik } from "formik";
 
 import {
@@ -13,12 +15,14 @@ import {
   EuiFlexItem,
   EuiButton,
   EuiButtonEmpty,
+  EuiProgress,
 } from "@elastic/eui";
 
-import { useAppDispatch } from "state";
+import { useAppDispatch, RootState } from "state";
 import { createDataset } from "state/datasets/dataset";
+import { createSamples } from "state/samples/sample";
 
-import { FormValues, FormErrors } from "./types";
+import { FormValues, FormErrors, FormTouched } from "./types";
 import MetadataTab from "./MetadataTab";
 import FieldsTab from "./FieldsTab";
 import LabelsTab from "./LabelsTab";
@@ -72,6 +76,13 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
   const history = useHistory();
   const dispatch = useAppDispatch();
 
+  const { pending: datasetPending } = useSelector(
+    (state: RootState) => state.dataset
+  );
+  const { pending: samplePending } = useSelector(
+    (state: RootState) => state.sample
+  );
+
   // Set header elements
   useEffect(() => {
     setBreadcrumbs([
@@ -115,15 +126,27 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
       const body = {
         name: values.name,
         description: values.description,
-        csv64: btoa(unescape(encodeURIComponent(values.file))),
-        id_field: values.id_field,
-        text_field: values.text_field,
         labels: values.labels,
       };
 
-      dispatch(createDataset(body)).then(() => {
-        history.push("/datasets");
-      });
+      dispatch(createDataset(body))
+        .then(unwrapResult)
+        .then((dataset) => {
+          if (values.file === "") return;
+
+          const formData = new FormData();
+          formData.append("id_field", values.id_field);
+          formData.append("text_field", values.text_field);
+          formData.append("file", values.file);
+          dispatch(
+            createSamples({
+              datasetID: dataset.dataset_id + "",
+              formData,
+            })
+          )
+            .then(unwrapResult)
+            .then(() => history.push("/datasets"));
+        });
     },
   });
 
@@ -178,15 +201,18 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
 
       <EuiSpacer size="l" />
 
-      <EuiPanel style={{ width: 420, margin: "auto" }}>
+      <EuiPanel style={{ width: 420, margin: "auto", position: "relative" }}>
+        {samplePending || datasetPending ? (
+          <EuiProgress size="xs" color="accent" position="absolute" />
+        ) : null}
         <EuiForm component="form">
           <MetadataTab
             handleChange={handleChange}
             handleBlur={handleBlur}
             setFields={setFields}
             values={values}
-            errors={errors}
-            touched={touched}
+            errors={errors as FormErrors}
+            touched={touched as FormTouched}
             hidden={!isTabActive(Tabs.metadata)}
           />
 
@@ -195,8 +221,8 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
             handleBlur={handleBlur}
             fields={fields}
             values={values}
-            errors={errors}
-            touched={touched}
+            errors={errors as FormErrors}
+            touched={touched as FormTouched}
             hidden={!isTabActive(Tabs.fields)}
           />
 

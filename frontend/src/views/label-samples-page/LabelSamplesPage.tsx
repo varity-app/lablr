@@ -281,7 +281,7 @@ const LabelSamplesPage: React.FC<IProps> = (props) => {
         <EuiFlexItem>
           <EuiPanel>
             {samplePending || sample === undefined ? (
-              <EuiLoadingContent lines={3} />
+              <EuiLoadingContent lines={2} />
             ) : (
               <EuiMarkdownFormat>{sample.text}</EuiMarkdownFormat>
             )}
@@ -290,7 +290,7 @@ const LabelSamplesPage: React.FC<IProps> = (props) => {
 
         <EuiFlexItem grow={false} style={{ minWidth: 400 }}>
           {datasetPending || samplePending || dataset === undefined ? (
-            <EuiLoadingContent lines={3} />
+            <EuiLoadingContent lines={2} />
           ) : (
             <React.Fragment>
               <EuiTitle size="xxs">
@@ -312,7 +312,7 @@ const LabelSamplesPage: React.FC<IProps> = (props) => {
           <EuiSpacer size="m" />
 
           {datasetPending || samplePending || dataset === undefined ? (
-            <EuiLoadingContent lines={3} />
+            <EuiLoadingContent lines={2} />
           ) : (
             dataset.labels
               .filter((label) => label.variant === "numerical")

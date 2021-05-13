@@ -34,6 +34,22 @@ export const fetchLatestSample = createAsyncThunk(
   }
 );
 
+// Create samples
+export const createSamples = createAsyncThunk(
+  "samples/createSamples",
+  async (args: { datasetID: string; formData: FormData }) => {
+    await axios.post(
+      `${API_PREFIX}/datasets/${args.datasetID}/samples`,
+      args.formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+  }
+);
+
 // Label sample
 export const labelSample = createAsyncThunk(
   "samples/labelSample",
@@ -102,6 +118,18 @@ const sampleSlice = createSlice({
       state.pending = false;
     });
     builder.addCase(labelSample.rejected, (state, { payload }) => {
+      state.pending = false;
+      console.log(payload);
+    });
+
+    // Create samples
+    builder.addCase(createSamples.pending, (state) => {
+      state.pending = true;
+    });
+    builder.addCase(createSamples.fulfilled, (state) => {
+      state.pending = false;
+    });
+    builder.addCase(createSamples.rejected, (state, { payload }) => {
       state.pending = false;
       console.log(payload);
     });

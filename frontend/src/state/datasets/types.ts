@@ -21,9 +21,5 @@ export interface DatasetDetailed extends Dataset {
 export interface DatasetCreate {
   name: string;
   description: string;
-  csv64: string;
-  id_field: string;
-  text_field: string;
-
   labels: LabelDefinition[];
 }

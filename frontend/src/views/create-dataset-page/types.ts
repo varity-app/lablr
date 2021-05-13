@@ -1,7 +1,7 @@
 export interface FormValues {
   name: string;
   description: string;
-  file: string;
+  file: File | "";
   id_field: string;
   text_field: string;
 
