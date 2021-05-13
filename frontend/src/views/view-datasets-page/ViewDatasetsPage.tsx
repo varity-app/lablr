@@ -83,6 +83,9 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
                   }}
                 />
               ))}
+              {datasets.length === 0 ? (
+                <p>No existing datasets. Create one via the button below.</p>
+              ) : null}
             </EuiListGroup>
           )}
         </EuiFlexItem>
