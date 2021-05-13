@@ -11,7 +11,7 @@ const LabelBadge: React.FC<IProps> = (props) => {
   const { color, children } = props;
 
   return (
-    <span style={{ padding: ".25em" }}>
+    <span style={{ margin: ".125em .25em", display: "inline-block" }}>
       <EuiBadge color={color}>{children}</EuiBadge>
     </span>
   );

@@ -4,7 +4,7 @@ Test samples endpoints
 
 from fastapi.testclient import TestClient
 
-from main import app
+from main import app, PREFIX
 
 from .test_datasets import EXAMPLE_DATASET_BODY
 
@@ -17,7 +17,7 @@ def create_demo_dataset() -> int:
     body = EXAMPLE_DATASET_BODY.copy()
 
     # Create dataset
-    response = client.post("/datasets", json=body)
+    response = client.post(f"{PREFIX}/datasets", json=body)
     assert response.status_code == 200
 
     dataset_id = response.json()["dataset_id"]
@@ -28,7 +28,7 @@ def create_demo_dataset() -> int:
 def delete_demo_dataset(dataset_id: int) -> None:
     """Helper method that destroys the demo dataset"""
 
-    response = client.delete(f"/datasets/{dataset_id}")
+    response = client.delete(f"{PREFIX}/datasets/{dataset_id}")
     assert response.status_code == 200
 
 
@@ -38,7 +38,7 @@ def test_samples_get():
     dataset_id = create_demo_dataset()
 
     # Fetch samples
-    response = client.get(f"/datasets/{dataset_id}/samples")
+    response = client.get(f"{PREFIX}/datasets/{dataset_id}/samples")
     assert response.status_code == 200
 
     delete_demo_dataset(dataset_id)
@@ -50,12 +50,12 @@ def test_sample_get():
     dataset_id = create_demo_dataset()
 
     # Fetch samples
-    response = client.get(f"/datasets/{dataset_id}/samples")
+    response = client.get(f"{PREFIX}/datasets/{dataset_id}/samples")
     assert response.status_code == 200
 
     sample_id = response.json()["samples"][0]["sample_id"]
 
-    response = client.get(f"/datasets/{dataset_id}/samples/{sample_id}")
+    response = client.get(f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}")
     assert response.status_code == 200
 
     delete_demo_dataset(dataset_id)
@@ -67,7 +67,7 @@ def test_label_sample():
     dataset_id = create_demo_dataset()
 
     # Fetch samples
-    response = client.get(f"/datasets/{dataset_id}/samples")
+    response = client.get(f"{PREFIX}/datasets/{dataset_id}/samples")
     assert response.status_code == 200
 
     sample_id = response.json()["samples"][0]["sample_id"]
@@ -79,7 +79,9 @@ def test_label_sample():
             "Numerical": 0.5,
         }
     }
-    response = client.put(f"/datasets/{dataset_id}/samples/{sample_id}", json=body)
+    response = client.put(
+        f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body
+    )
     print(response.json())
 
     assert response.status_code == 200
@@ -90,7 +92,9 @@ def test_label_sample():
             "Numerical": 0,
         }
     }
-    response = client.put(f"/datasets/{dataset_id}/samples/{sample_id}", json=body)
+    response = client.put(
+        f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body
+    )
     print(response.json())
 
     assert response.status_code == 200
@@ -104,7 +108,7 @@ def test_label_sample_invalid_numerical():
     dataset_id = create_demo_dataset()
 
     # Fetch samples
-    response = client.get(f"/datasets/{dataset_id}/samples")
+    response = client.get(f"{PREFIX}/datasets/{dataset_id}/samples")
     assert response.status_code == 200
 
     sample_id = response.json()["samples"][0]["sample_id"]
@@ -115,7 +119,9 @@ def test_label_sample_invalid_numerical():
             "Numerical": -10,
         }
     }
-    response = client.put(f"/datasets/{dataset_id}/samples/{sample_id}", json=body)
+    response = client.put(
+        f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body
+    )
     print(response.json())
 
     assert response.status_code == 422
@@ -126,7 +132,9 @@ def test_label_sample_invalid_numerical():
             "Numerical": 10,
         }
     }
-    response = client.put(f"/datasets/{dataset_id}/samples/{sample_id}", json=body)
+    response = client.put(
+        f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body
+    )
     print(response.json())
 
     assert response.status_code == 422
@@ -140,7 +148,7 @@ def test_label_sample_invalid_boolean():
     dataset_id = create_demo_dataset()
 
     # Fetch samples
-    response = client.get(f"/datasets/{dataset_id}/samples")
+    response = client.get(f"{PREFIX}/datasets/{dataset_id}/samples")
     assert response.status_code == 200
 
     sample_id = response.json()["samples"][0]["sample_id"]
@@ -151,7 +159,9 @@ def test_label_sample_invalid_boolean():
             "Boolean": 0.5,
         }
     }
-    response = client.put(f"/datasets/{dataset_id}/samples/{sample_id}", json=body)
+    response = client.put(
+        f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body
+    )
     print(response.json())
 
     assert response.status_code == 422
@@ -165,7 +175,7 @@ def test_export_labels():
     dataset_id = create_demo_dataset()
 
     # Fetch samples
-    response = client.get(f"/datasets/{dataset_id}/samples")
+    response = client.get(f"{PREFIX}/datasets/{dataset_id}/samples")
     assert response.status_code == 200
 
     sample_id = response.json()["samples"][0]["sample_id"]
@@ -176,12 +186,14 @@ def test_export_labels():
             "Boolean": 1,
         }
     }
-    response = client.put(f"/datasets/{dataset_id}/samples/{sample_id}", json=body)
+    response = client.put(
+        f"{PREFIX}/datasets/{dataset_id}/samples/{sample_id}", json=body
+    )
     print(response.json())
 
     assert response.status_code == 200
 
-    response = client.get(f"/datasets/{dataset_id}")
+    response = client.get(f"{PREFIX}/datasets/{dataset_id}")
     assert response.status_code == 200
 
     delete_demo_dataset(dataset_id)

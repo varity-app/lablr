@@ -1,5 +1,6 @@
-import React, { useEffect, Dispatch, SetStateAction } from "react";
+import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { useParams, useHistory } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 import {
   EuiBreadcrumb,
@@ -14,8 +15,12 @@ import {
   EuiCard,
   EuiProgress,
   EuiIcon,
+  EuiConfirmModal,
 } from "@elastic/eui";
 import { euiPaletteColorBlindBehindText } from "@elastic/eui/lib/services";
+
+import { RootState, useAppDispatch } from "state";
+import { fetchDataset, deleteDataset } from "state/datasets/dataset";
 
 import LabelBadge from "./LabelBadge";
 
@@ -38,8 +43,15 @@ const generateLabelsGroup = (labels: string[]) =>
 const ViewDatasetPage: React.FC<IProps> = (props) => {
   const { setBreadcrumbs, setRightHeader } = props;
 
-  const { dataset_id: datasetID } = useParams<any>();
+  const { dataset_id: datasetID } = useParams<{ [param: string]: string }>();
   const history = useHistory();
+  const dispatch = useAppDispatch();
+
+  const [confirm, setConfirm] = useState(false);
+
+  const { data: dataset, pending } = useSelector(
+    (state: RootState) => state.dataset
+  );
 
   useEffect(() => {
     setBreadcrumbs([
@@ -58,17 +70,44 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
     setRightHeader([]);
   }, [setBreadcrumbs, setRightHeader, history, datasetID]);
 
-  const booleanLabels = ["News", "Analysis", "Post"];
+  useEffect(() => {
+    dispatch(fetchDataset(datasetID));
+  }, [dispatch, datasetID]);
+
+  const booleanLabels = dataset
+    ? dataset.labels
+        .filter((label) => label.variant === "boolean")
+        .map((label) => label.name)
+    : [];
   const booleanLabelsGroup = generateLabelsGroup(booleanLabels);
 
-  const numericalLabels = ["Confidence", "Sentiment"];
+  const numericalLabels = dataset
+    ? dataset.labels
+        .filter((label) => label.variant === "numerical")
+        .map((label) => label.name)
+    : [];
   const numericalLabelsGroup = generateLabelsGroup(numericalLabels);
 
   const goToLabeling = () => history.push(`/datasets/${datasetID}/labeling`);
 
-  return (
+  // Delete dataset
+  const deleteDS = () => {
+    dispatch(deleteDataset(datasetID)).then(() => {
+      history.push("/datasets");
+    });
+  };
+
+  const loadingEl = (
     <React.Fragment>
-      <EuiSpacer size="l" />
+      <EuiSpacer style={{ minWidth: 300 }} size="l" />
+      <EuiProgress size="s" />
+    </React.Fragment>
+  );
+
+  return pending || dataset === undefined ? (
+    loadingEl
+  ) : (
+    <React.Fragment>
       <EuiTitle size="m">
         <h1 style={{ textAlign: "center" }}>
           <EuiAvatar
@@ -80,17 +119,14 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
             iconColor="primary"
             style={{ marginRight: "1em" }}
           />
-          Reddit Investing Submissions 2021
+          {dataset.name}
         </h1>
       </EuiTitle>
 
       <EuiSpacer size="m" />
 
-      <EuiText>
-        <p>
-          Submissions from various investing-related subreddits from January to
-          April 2021.
-        </p>
+      <EuiText style={{ textAlign: "center" }}>
+        <p>{dataset.description}</p>
       </EuiText>
 
       <EuiSpacer size="xl" />
@@ -103,17 +139,43 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
         </EuiFlexItem>
 
         <EuiFlexItem grow={false}>
-          <EuiButton color="text" onClick={() => {}} iconType="download">
+          <EuiButton
+            color="text"
+            onClick={() => {}}
+            iconType="download"
+            href={`/api/v1/datasets/${datasetID}/export`}
+          >
             Export labels
           </EuiButton>
         </EuiFlexItem>
 
         <EuiFlexItem grow={false}>
-          <EuiButton color="danger" onClick={() => {}} iconType="trash">
+          <EuiButton
+            color="danger"
+            onClick={() => setConfirm(true)}
+            iconType="trash"
+          >
             Delete dataset
           </EuiButton>
         </EuiFlexItem>
       </EuiFlexGroup>
+
+      {confirm ? (
+        <EuiConfirmModal
+          title="Delete dataset"
+          onCancel={() => setConfirm(false)}
+          onConfirm={deleteDS}
+          buttonColor="danger"
+          cancelButtonText="No, don't do it"
+          confirmButtonText="Yes, do it"
+          maxWidth
+        >
+          <p>
+            Are you sure you want to permanently delete the dataset{" "}
+            <strong>{dataset.name}</strong> and all its labels?
+          </p>
+        </EuiConfirmModal>
+      ) : null}
 
       <EuiSpacer size="l" />
 
@@ -126,11 +188,11 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
       <EuiSpacer size="m" />
 
       <EuiFlexGroup justifyContent="center">
-        <EuiFlexItem grow={1} style={{ maxWidth: 500 }}>
+        <EuiFlexItem grow={1} style={{ maxWidth: 300 }}>
           <EuiCard title="Boolean" description={booleanLabelsGroup} />
         </EuiFlexItem>
 
-        <EuiFlexItem grow={1}>
+        <EuiFlexItem grow={1} style={{ maxWidth: 300 }}>
           <EuiCard title="Numerical" description={numericalLabelsGroup} />
         </EuiFlexItem>
       </EuiFlexGroup>
@@ -148,14 +210,23 @@ const ViewDatasetPage: React.FC<IProps> = (props) => {
       <div style={{ position: "relative", maxWidth: 350, margin: "auto" }}>
         <EuiCard
           icon={<EuiIcon size="xl" type="partial" />}
-          title="87% Labeled"
+          title={`${Math.floor(dataset.labeled_percent * 100)}% Labeled`}
           description={
-            <EuiButton color="primary" onClick={goToLabeling}>
-              Continue
-            </EuiButton>
+            dataset.labeled_percent === 1 ? (
+              ""
+            ) : (
+              <EuiButton color="primary" onClick={goToLabeling}>
+                Continue
+              </EuiButton>
+            )
           }
         />
-        <EuiProgress size="s" max={100} value={87} position="absolute" />
+        <EuiProgress
+          size="s"
+          max={100}
+          value={dataset.labeled_percent * 100}
+          position="absolute"
+        />
       </div>
     </React.Fragment>
   );

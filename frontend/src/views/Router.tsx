@@ -24,17 +24,21 @@ const Router: React.FC = () => {
     <BrowserRouter>
       <Header breadcrumbs={breadcrumbs} rightSection={rightHeader} />
 
-      <EuiPage paddingSize="none">
-        <EuiPageBody panelled panelProps={{ hasShadow: false }}>
+      <EuiPage paddingSize="m">
+        <EuiPageBody
+          panelled
+          color="transparent"
+          panelProps={{ hasShadow: false }}
+        >
           <EuiPageContent
             hasBorder={false}
             hasShadow={false}
-            paddingSize="none"
             color="transparent"
             borderRadius="none"
             horizontalPosition="center"
+            style={{ width: "100%" }}
           >
-            <EuiPageContentBody>
+            <EuiPageContentBody restrictWidth>
               <Switch>
                 <Route path="/" exact>
                   <Redirect to="/datasets" />

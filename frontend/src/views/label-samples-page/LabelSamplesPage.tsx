@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory, Prompt } from "react-router-dom";
 import { useHotkeys } from "react-hotkeys-hook";
+import { useSelector } from "react-redux";
 
 import {
   EuiBreadcrumb,
@@ -15,62 +16,54 @@ import {
   EuiSelectableOption,
   EuiBadge,
   EuiRange,
-  EuiBottomBar,
-  EuiButton,
-  EuiButtonIcon,
-  EuiToolTip,
   EuiProgress,
+  EuiLoadingContent,
+  EuiText,
+  EuiIcon,
 } from "@elastic/eui";
+
+import { RootState, useAppDispatch } from "state";
+import { fetchDataset } from "state/datasets/dataset";
+import {
+  fetchSample,
+  fetchLatestSample,
+  labelSample,
+  resetHistory,
+} from "state/samples/sample";
+
+import BottomBar from "./BottomBar";
 
 interface IProps {
   setBreadcrumbs: Dispatch<SetStateAction<EuiBreadcrumb[]>>;
   setRightHeader: Dispatch<SetStateAction<JSX.Element[]>>;
 }
 
-const DUMBY_TEXT = `
-I don't regularly make posts about individual securities...actually this would be my first. I'm tired of daily DD posts on companies that are at ATH, so here's a mini-DD on one that is still heavily discounted from Covid. And of course...this is not investment advice, do your own due diligence.
-
-Let's look at where they made their business in 2020:\n
-
-- $1.9 billion in revenue in orthopedics: mainly knee implants, hip implants, & trauma devices.
-
-- $1.3 billion in sports medicine
-
-- $1.3 billion in wound management
-
-So we have a company that makes most of their revenue in sports, injuries, and hip/knees. Literally all things that were put on halt due to Covid. As to be expected, 2020 was a terrible year for them, with revenue down 11.2% and EPS down 25%. They also under-performed all their larger peers (i.e. Striker, Zimmer Biomet) whom thanks to more diversified products were not hit as hard.
-
-I believe most of their under-performance is due to events that are transitory:
-`;
-
-const INITIAL_OPTIONS = [
-  {
-    label: "News",
-    prepend: <EuiAvatar size="s" type="space" name="News" />,
-    append: <EuiBadge>1</EuiBadge>,
-  },
-  {
-    label: "DD/Analysis",
-    prepend: <EuiAvatar size="s" type="space" name="DD/Analysis" />,
-    append: <EuiBadge>2</EuiBadge>,
-  },
-  {
-    label: "Inquisitive",
-    prepend: <EuiAvatar size="s" type="space" name="Inquisitive" />,
-    append: <EuiBadge>3</EuiBadge>,
-  },
-];
+interface Labels {
+  [label: string]: number;
+}
 
 const LabelSamplesPage: React.FC<IProps> = (props) => {
   const { setBreadcrumbs, setRightHeader } = props;
 
-  const [options, setOptions] = useState<EuiSelectableOption[]>(
-    INITIAL_OPTIONS
-  );
+  const [options, setOptions] = useState<EuiSelectableOption[]>([]);
+  const [numericalLabels, setNumericalLabels] = useState<Labels>({});
+  const [historyIdx, setHistoryIdx] = useState(0);
 
   const { dataset_id: datasetID } = useParams<any>();
   const history = useHistory();
+  const dispatch = useAppDispatch();
 
+  const {
+    data: sample,
+    metadata,
+    pending: samplePending,
+    history: sampleHistory,
+  } = useSelector((state: RootState) => state.sample);
+  const { data: dataset, pending: datasetPending } = useSelector(
+    (state: RootState) => state.dataset
+  );
+
+  // Keyboard shortcuts for boolean labels
   const selectOption = (keyNum: number) => {
     if (keyNum > options.length) return;
     let newOptions = [...options]; // Create clone of options
@@ -83,17 +76,18 @@ const LabelSamplesPage: React.FC<IProps> = (props) => {
     setOptions(newOptions);
   };
 
-  useHotkeys("1", () => selectOption(1));
-  useHotkeys("2", () => selectOption(2));
-  useHotkeys("3", () => selectOption(3));
-  useHotkeys("4", () => selectOption(4));
-  useHotkeys("5", () => selectOption(5));
-  useHotkeys("6", () => selectOption(6));
-  useHotkeys("7", () => selectOption(7));
-  useHotkeys("8", () => selectOption(8));
-  useHotkeys("9", () => selectOption(9));
-  useHotkeys("0", () => selectOption(0));
+  useHotkeys("1", () => selectOption(1), [options]);
+  useHotkeys("2", () => selectOption(2), [options]);
+  useHotkeys("3", () => selectOption(3), [options]);
+  useHotkeys("4", () => selectOption(4), [options]);
+  useHotkeys("5", () => selectOption(5), [options]);
+  useHotkeys("6", () => selectOption(6), [options]);
+  useHotkeys("7", () => selectOption(7), [options]);
+  useHotkeys("8", () => selectOption(8), [options]);
+  useHotkeys("9", () => selectOption(9), [options]);
+  useHotkeys("0", () => selectOption(10), [options]);
 
+  // Set header elements on mount
   useEffect(() => {
     setBreadcrumbs([
       {
@@ -116,113 +110,259 @@ const LabelSamplesPage: React.FC<IProps> = (props) => {
         text: "Labeling",
       },
     ]);
-    setRightHeader([
-      <div>
-        <EuiProgress
-          label="3.2k / 10k Labeled"
-          valueText
-          max={100}
-          value={32}
-          color="success"
-          size="s"
-          style={{ minWidth: 200 }}
-        />
-      </div>,
-    ]);
-  }, [setBreadcrumbs, setRightHeader, history, datasetID]);
+    if (metadata !== undefined)
+      setRightHeader([
+        <div>
+          <EuiProgress
+            label="Progress"
+            valueText
+            max={100}
+            value={Math.floor(metadata.labeled_percent * 100)}
+            color="success"
+            size="s"
+            style={{ minWidth: 200 }}
+          />
+        </div>,
+      ]);
+  }, [setBreadcrumbs, setRightHeader, history, datasetID, metadata]);
+
+  const nextSample = () => {
+    if (historyIdx === 0) {
+      dispatch(
+        fetchLatestSample({
+          datasetID,
+          offset: metadata === undefined ? 0 : metadata.pagination.offset + 1,
+        })
+      );
+    } else {
+      setHistoryIdx(historyIdx - 1);
+      dispatch(
+        fetchSample({ datasetID, sampleID: sampleHistory[historyIdx - 1] })
+      );
+    }
+  };
+
+  const saveAndContinue = () => {
+    if (sample === undefined || datasetPending || samplePending) return;
+
+    const labels = options.reduce(
+      (acc, option) => {
+        acc[option.label] = option.checked ? 1 : 0;
+        return acc;
+      },
+      { ...numericalLabels }
+    );
+
+    if (historyIdx === 0) {
+      dispatch(
+        labelSample({ datasetID, sampleID: sample.sample_id, labels })
+      ).then(() => {
+        dispatch(
+          fetchLatestSample({
+            datasetID,
+            offset: metadata === undefined ? 0 : metadata.pagination.offset,
+          })
+        );
+      });
+    } else {
+      setHistoryIdx(historyIdx - 1);
+      dispatch(
+        labelSample({ datasetID, sampleID: sample.sample_id, labels })
+      ).then(() => {
+        dispatch(
+          fetchSample({ datasetID, sampleID: sampleHistory[historyIdx - 1] })
+        );
+      });
+    }
+  };
+
+  const prevSample = () => {
+    if (historyIdx > sampleHistory.length - 2) return;
+    setHistoryIdx(historyIdx + 1);
+    dispatch(
+      fetchSample({ datasetID, sampleID: sampleHistory[historyIdx + 1] })
+    );
+  };
+
+  useHotkeys("d", nextSample, [datasetID, sample]);
+  useHotkeys("a", prevSample, [datasetID, sample]);
+  useHotkeys("space", saveAndContinue, [
+    datasetID,
+    sample,
+    options,
+    numericalLabels,
+    samplePending,
+    datasetPending,
+  ]);
+
+  // Fetch dataset and latest sample on mount
+  useEffect(() => {
+    dispatch(fetchDataset(datasetID));
+  }, [dispatch, datasetID]);
+
+  // Fetch latest sample when history resets
+  useEffect(() => {
+    if (sampleHistory.length > 0) return;
+    dispatch(fetchLatestSample({ datasetID, offset: 0 }));
+  }, [dispatch, datasetID, sampleHistory]);
+
+  // Update label elements as dataset or sample updates
+  useEffect(() => {
+    if (dataset === undefined || sample === undefined) return;
+
+    setOptions(
+      dataset.labels
+        .filter((label) => label.variant === "boolean")
+        .map((label, i) => ({
+          label: label.name,
+          checked:
+            sample.labels && sample.labels[label.name] === 1 ? "on" : undefined,
+          prepend: <EuiAvatar size="s" type="space" name={label.name} />,
+          append:
+            i + 1 <= 10 ? (
+              <EuiBadge>{i === 10 ? 0 : i + 1}</EuiBadge>
+            ) : undefined,
+        }))
+    );
+
+    setNumericalLabels(
+      dataset.labels
+        .filter((label) => label.variant === "numerical")
+        .reduce((acc, cur) => {
+          acc[cur.name] = (sample.labels && sample.labels[cur.name]) || 0;
+          return acc;
+        }, {} as Labels)
+    );
+  }, [dataset, sample]);
+
+  const bottomBar = (
+    <BottomBar
+      historyIdx={historyIdx}
+      saveAndContinue={saveAndContinue}
+      nextSample={nextSample}
+      prevSample={prevSample}
+      onResetHistory={() => {
+        setHistoryIdx(0);
+        dispatch(resetHistory());
+      }}
+    />
+  );
+
+  if (
+    !datasetPending &&
+    !samplePending &&
+    dataset !== undefined &&
+    metadata &&
+    metadata.pagination.next_offset === null
+  )
+    return (
+      <React.Fragment>
+        <div style={{ textAlign: "center" }}>
+          {" "}
+          <EuiIcon size="xxl" type="check" color="success" />
+        </div>
+        <EuiText>
+          <p style={{ textAlign: "center" }}>
+            No further samples to label. If the dataset is not 100% labeled, try
+            reseting the history.
+          </p>
+        </EuiText>
+        {bottomBar}
+      </React.Fragment>
+    );
 
   return (
     <React.Fragment>
-      <EuiSpacer size="m" />
-
+      <Prompt
+        when={sampleHistory.length > 1}
+        message="Are you sure you want to leave the page?  You can come resume your labeling progress later."
+      />
       <EuiFlexGroup>
         <EuiFlexItem>
           <EuiPanel>
-            <EuiMarkdownFormat>{DUMBY_TEXT}</EuiMarkdownFormat>
+            {samplePending || sample === undefined ? (
+              <EuiLoadingContent lines={3} />
+            ) : (
+              <EuiMarkdownFormat>{sample.text}</EuiMarkdownFormat>
+            )}
           </EuiPanel>
         </EuiFlexItem>
 
         <EuiFlexItem grow={false} style={{ minWidth: 400 }}>
-          <EuiTitle size="xxs">
-            <h3>Tags</h3>
-          </EuiTitle>
+          {datasetPending || samplePending || dataset === undefined ? (
+            <EuiLoadingContent lines={3} />
+          ) : (
+            <React.Fragment>
+              <EuiTitle size="xxs">
+                <h3>Tags</h3>
+              </EuiTitle>
 
-          <EuiSpacer size="xs" />
+              <EuiSpacer size="xs" />
 
-          <EuiSelectable
-            listProps={{ bordered: true }}
-            options={options}
-            onChange={(newOptions) => setOptions(newOptions)}
-          >
-            {(list) => list}
-          </EuiSelectable>
+              <EuiSelectable
+                listProps={{ bordered: true }}
+                options={options}
+                onChange={(newOptions) => setOptions(newOptions)}
+              >
+                {(list) => list}
+              </EuiSelectable>
+            </React.Fragment>
+          )}
 
           <EuiSpacer size="m" />
 
-          <EuiTitle size="xxs">
-            <h3>Sentiment</h3>
-          </EuiTitle>
+          {datasetPending || samplePending || dataset === undefined ? (
+            <EuiLoadingContent lines={3} />
+          ) : (
+            dataset.labels
+              .filter((label) => label.variant === "numerical")
+              .map((label) => {
+                const levels: any[] = [];
 
-          <EuiSpacer size="xs" />
+                if (label.minimum !== undefined && label.minimum < 0)
+                  levels.push({
+                    min: Math.min(0, label.minimum),
+                    max: 0,
+                    color: "danger",
+                  });
 
-          <EuiRange
-            value={0.5}
-            min={-1.0}
-            max={1.0}
-            step={0.5}
-            tickInterval={0.5}
-            showTicks
-            levels={[
-              {
-                min: -1,
-                max: 0,
-                color: "danger",
-              },
-              {
-                min: 0,
-                max: 1,
-                color: "success",
-              },
-            ]}
-          />
+                if (label.maximum !== undefined && label.maximum > 0)
+                  levels.push({
+                    min: 0,
+                    max: Math.max(0, label.maximum),
+                    color: "success",
+                  });
+
+                return (
+                  <React.Fragment key={label.name}>
+                    <EuiTitle size="xxs">
+                      <h3>{label.name}</h3>
+                    </EuiTitle>
+
+                    <EuiSpacer size="xs" />
+                    <EuiRange
+                      value={numericalLabels[label.name] || 0}
+                      min={label.minimum}
+                      max={label.maximum}
+                      step={label.interval}
+                      tickInterval={label.interval}
+                      showTicks
+                      onChange={(event: any) =>
+                        setNumericalLabels({
+                          ...numericalLabels,
+                          [label.name]: event.target.value,
+                        })
+                      }
+                      levels={levels}
+                    />
+                  </React.Fragment>
+                );
+              })
+          )}
         </EuiFlexItem>
       </EuiFlexGroup>
 
-      <EuiBottomBar>
-        <EuiFlexGroup justifyContent="spaceBetween">
-          <EuiFlexItem grow={false}>
-            <EuiToolTip content="Move to previous sample. (a)">
-              <EuiButtonIcon
-                display="base"
-                size="m"
-                aria-label="previous sample"
-                color="ghost"
-                iconType="arrowLeft"
-              />
-            </EuiToolTip>
-          </EuiFlexItem>
-
-          <EuiFlexItem grow={false}>
-            <EuiToolTip content="Save current labels and move to next sample. (space)">
-              <EuiButton fill iconType="check" color="secondary">
-                Save and continue
-              </EuiButton>
-            </EuiToolTip>
-          </EuiFlexItem>
-
-          <EuiFlexItem grow={false}>
-            <EuiToolTip content="Move to next sample. (d)">
-              <EuiButtonIcon
-                display="base"
-                size="m"
-                aria-label="next sample"
-                color="ghost"
-                iconType="arrowRight"
-              />
-            </EuiToolTip>
-          </EuiFlexItem>
-        </EuiFlexGroup>
-      </EuiBottomBar>
+      {bottomBar}
     </React.Fragment>
   );
 };

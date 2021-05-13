@@ -4,7 +4,7 @@ Test datasets
 
 from fastapi.testclient import TestClient
 
-from main import app
+from main import app, PREFIX
 
 client = TestClient(app)
 
@@ -33,7 +33,7 @@ EXAMPLE_DATASET_BODY = {
 def test_get_datasets():
     """Unit test for hitting the /datasets endpoint"""
 
-    response = client.get("/datasets")
+    response = client.get(f"{PREFIX}/datasets")
 
     assert response.status_code == 200
 
@@ -41,7 +41,7 @@ def test_get_datasets():
 def test_get_nonexistent_dataset():
     """Unit test for trying to fetch a nonexistent dataset"""
 
-    response = client.get("/datasets/daflkadsjflkajdflkadfadadfadsfad")
+    response = client.get(f"{PREFIX}/datasets/daflkadsjflkajdflkadfadadfadsfad")
 
     assert response.status_code == 404
 
@@ -51,17 +51,18 @@ def test_create_delete_dataset():
 
     body = EXAMPLE_DATASET_BODY.copy()
 
-    response = client.post("/datasets", json=body)
+    response = client.post(f"{PREFIX}/datasets", json=body)
     response_body = response.json()
+    dataset_id = response_body["dataset_id"]
 
     assert response.status_code == 200
     assert response_body["name"] == "Unit Test Dataset"
     assert response_body["description"] == "Dataset created during a unit test"
 
-    response = client.get(f"/datasets/{response_body['dataset_id']}")
+    response = client.get(f"{PREFIX}/datasets/{dataset_id}")
     assert response.status_code == 200
 
-    response = client.delete(f"/datasets/{response_body['dataset_id']}")
+    response = client.delete(f"{PREFIX}/datasets/{dataset_id}")
     assert response.status_code == 200
 
 
@@ -72,8 +73,8 @@ def test_create_missing_fields_dataset():
         body = EXAMPLE_DATASET_BODY.copy()
         del body[field]
 
-        response = client.post("/datasets", json=body)
-        assert response.status_code != 200
+        response = client.post(f"{PREFIX}/datasets", json=body)
+        assert response.status_code == 422
 
 
 def test_create_invalid_csv64_dataset():
@@ -82,7 +83,7 @@ def test_create_invalid_csv64_dataset():
     body = EXAMPLE_DATASET_BODY.copy()
     body["csv64"] = "this is not base64 encoded"
 
-    response = client.post("/datasets", json=body)
+    response = client.post(f"{PREFIX}/datasets", json=body)
 
     assert response.status_code == 422
     assert (
@@ -93,7 +94,7 @@ def test_create_invalid_csv64_dataset():
 def test_delete_nonexistent_dataset():
     """Unit test for trying to delete a nonexistent dataset"""
 
-    response = client.delete("/datasets/daflkadsjflkajdflkadfadadfadsfad")
+    response = client.delete(f"{PREFIX}/datasets/daflkadsjflkajdflkadfadadfadsfad")
 
     assert response.status_code == 404
 
@@ -109,6 +110,6 @@ def test_create_invalid_label_dataset():
         }
     ]
 
-    response = client.post("/datasets", json=body)
+    response = client.post(f"{PREFIX}/datasets", json=body)
 
     assert response.status_code == 422

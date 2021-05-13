@@ -8,8 +8,7 @@ from io import StringIO
 import csv
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from sqlalchemy.orm import Session
 
@@ -59,11 +58,7 @@ class DatasetGetOne(DatasetGet):
     """Schema of a response for fetching a single dataset"""
 
     labels: List[LabelDefinition]
-
-    class Config:
-        """Pydantic Config subclass"""
-
-        orm_mode = True
+    labeled_percent: float
 
 
 class DatasetCreate(Dataset):
@@ -95,9 +90,26 @@ async def get_dataset(dataset_id, db_session: Session = Depends(get_db)):
             status_code=404, detail=f"No dataset found with id `{dataset_id}`"
         )
 
-    _ = db_dataset.labels  # Results in `labels` field appearing in response
+    # Calculate labeled percentage
+    query = db_session.query(sample.Sample).filter_by(dataset_id=dataset_id)
 
-    return db_dataset
+    samples_count = query.count()
+    labeled_count = query.filter(sample.Sample.labels.isnot(None)).count()
+
+    labeled_percent = 1  # 100% labeled if there are zero samples to begin with
+    if samples_count > 0:
+        labeled_percent = float(labeled_count) / samples_count
+
+    response = dict(
+        dataset_id=db_dataset.dataset_id,
+        name=db_dataset.name,
+        description=db_dataset.description,
+        created_at=db_dataset.created_at,
+        labels=db_dataset.labels,
+        labeled_percent=labeled_percent,
+    )
+
+    return response
 
 
 @router.delete("/datasets/{dataset_id}", tags=["datasets"])
@@ -144,8 +156,11 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
     db_session.commit()
 
     # Create label definitions
+    db_labels = []
     for label in data.labels:
         if label.variant not in LabelVariants.valid_labels:
+            db_session.delete(db_dataset)
+            db_session.commit()
             raise HTTPException(
                 status_code=422,
                 detail=f"Variant `{label.variant}` for label `{label.name}` "
@@ -160,12 +175,21 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
             maximum=label.maximum,
             interval=label.interval,
         )
+        db_labels.append(db_label)
+
+    for db_label in db_labels:
         db_session.add(db_label)
+
+    db_session.commit()
 
     # Decode csv64 field
     try:
         csv_string = decode_b64string(data.csv64)
     except ValueError as error:
+        db_session.delete(db_dataset)
+        for db_label in db_labels:
+            db_session.delete(db_label)
+        db_session.commit()
         raise HTTPException(
             status_code=422, detail="Field csv64 does not have a valid base64 encoding"
         ) from error
@@ -177,6 +201,10 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
     # Check that id and text fields are valid
     for field in (data.id_field, data.text_field):
         if field not in reader.fieldnames:
+            db_session.delete(db_dataset)
+            for db_label in db_labels:
+                db_session.delete(db_label)
+            db_session.commit()
             raise HTTPException(
                 status_code=422, detail=f"Field {field} not found in provided CSV"
             )
@@ -196,9 +224,7 @@ async def create_dataset(data: DatasetCreate, db_session: Session = Depends(get_
     return db_dataset
 
 
-@router.get(
-    "/datasets/{dataset_id}/export", response_class=PlainTextResponse, tags=["datasets"]
-)
+@router.get("/datasets/{dataset_id}/export", response_class=Response, tags=["datasets"])
 def export_labels(dataset_id, db_session: Session = Depends(get_db)):
     """Export a dataset's labels in CSV format"""
 
@@ -228,7 +254,6 @@ def export_labels(dataset_id, db_session: Session = Depends(get_db)):
             id=db_sample.original_id,
             **db_sample.labels,
         )
-        print(body)
         writer.writerow(body)
 
-    return output.getvalue()
+    return Response(content=output.getvalue(), media_type="text/csv")
