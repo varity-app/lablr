@@ -2,6 +2,8 @@ import React from "react";
 
 import { EuiFormRow, EuiFieldText, EuiFilePicker } from "@elastic/eui";
 
+import { createFakeEvent } from "utilities/event";
+
 import { FormValues, FormErrors, FormTouched } from "./types";
 
 interface IProps {
@@ -15,13 +17,6 @@ interface IProps {
 }
 
 const HIDDEN_STYLE = { display: "none" };
-
-const createFakeEvent = (name: string, value?: string) => ({
-  target: {
-    name,
-    value,
-  },
-});
 
 const MetadataTab: React.FC<IProps> = (props) => {
   const {

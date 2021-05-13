@@ -9,7 +9,14 @@ import {
   EuiStepsHorizontal,
   EuiPanel,
   EuiForm,
+  EuiFlexGroup,
+  EuiFlexItem,
+  EuiButton,
+  EuiButtonEmpty,
 } from "@elastic/eui";
+
+import { useAppDispatch } from "state";
+import { createDataset } from "state/datasets/dataset";
 
 import { FormValues, FormErrors } from "./types";
 import MetadataTab from "./MetadataTab";
@@ -63,8 +70,9 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
   const [fields, setFields] = useState<string[]>([]); // CSV fields/columns
 
   const history = useHistory();
+  const dispatch = useAppDispatch();
 
-  // Set Header elements
+  // Set header elements
   useEffect(() => {
     setBreadcrumbs([
       {
@@ -85,34 +93,13 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
   // Helper method to check active tab
   const isTabActive = (mode: Tabs) => mode === tab;
 
-  // Steps element
-  const horizontalSteps = [
-    {
-      title: "Metadata",
-      isSelected: isTabActive(Tabs.metadata),
-      isComplete: false && !isTabActive(Tabs.metadata),
-      onClick: () => setTab(Tabs.metadata),
-    },
-    {
-      title: "Fields",
-      isSelected: isTabActive(Tabs.fields),
-      isComplete: false && !isTabActive(Tabs.fields),
-      onClick: () => setTab(Tabs.fields),
-    },
-    {
-      title: "Labels",
-      isSelected: isTabActive(Tabs.labels),
-      isComplete: false && !isTabActive(Tabs.labels),
-      onClick: () => setTab(Tabs.labels),
-    },
-  ];
-
+  // Formik validation
   const {
     handleSubmit,
     handleChange,
     handleBlur,
     touched,
-    values, // use this if you want controlled components
+    values,
     errors,
   } = useFormik({
     initialValues: {
@@ -125,13 +112,64 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
     },
     validate,
     onSubmit: (values) => {
-      console.log(JSON.stringify(values));
+      const body = {
+        name: values.name,
+        description: values.description,
+        csv64: btoa(unescape(encodeURIComponent(values.file))),
+        id_field: values.id_field,
+        text_field: values.text_field,
+        labels: values.labels,
+      };
+
+      dispatch(createDataset(body)).then(() => {
+        history.push("/datasets");
+      });
     },
   });
 
+  const validMetadata = !errors.name && !errors.description && !errors.file;
+  const validFields = !errors.id_field && !errors.text_field;
+  const validLabels = values.labels.length > 0;
+
+  let nextStepAvailable = validMetadata;
+  if (tab === Tabs.fields) nextStepAvailable = validMetadata && validFields;
+
+  // Steps element
+  const horizontalSteps = [
+    {
+      title: "Metadata",
+      isSelected: isTabActive(Tabs.metadata),
+      isComplete: validMetadata,
+      onClick: () => setTab(Tabs.metadata),
+    },
+    {
+      title: "Fields",
+      isSelected: isTabActive(Tabs.fields),
+      isComplete: validFields,
+      onClick: () => setTab(Tabs.fields),
+      disabled: !validMetadata,
+    },
+    {
+      title: "Labels",
+      isSelected: isTabActive(Tabs.labels),
+      isComplete: validLabels,
+      onClick: () => setTab(Tabs.labels),
+      disabled: !validMetadata || !validFields,
+    },
+  ];
+
+  const prevStep = () => {
+    if (tab === Tabs.fields) setTab(Tabs.metadata);
+    else if (tab === Tabs.labels) setTab(Tabs.fields);
+  };
+
+  const nextStep = () => {
+    if (tab === Tabs.metadata) setTab(Tabs.fields);
+    else if (tab === Tabs.fields) setTab(Tabs.labels);
+  };
+
   return (
     <React.Fragment>
-      <EuiSpacer size="l" />
       <EuiTitle size="l">
         <h1 style={{ textAlign: "center" }}>Create Dataset</h1>
       </EuiTitle>
@@ -153,16 +191,50 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
           />
 
           <FieldsTab
-            // handleChange={handleChange}
+            handleChange={handleChange}
+            handleBlur={handleBlur}
+            fields={fields}
+            values={values}
+            errors={errors}
+            touched={touched}
             hidden={!isTabActive(Tabs.fields)}
           />
 
           <LabelsTab
-            // handleChange={handleChange}
             hidden={!isTabActive(Tabs.labels)}
+            handleChange={handleChange}
+            handleBlur={handleBlur}
+            values={values}
           />
         </EuiForm>
       </EuiPanel>
+
+      <EuiSpacer size="l" />
+
+      <EuiFlexGroup justifyContent="center">
+        {isTabActive(Tabs.metadata) ? null : (
+          <EuiFlexItem grow={false}>
+            <EuiButtonEmpty onClick={prevStep}>Previous step</EuiButtonEmpty>
+          </EuiFlexItem>
+        )}
+        {isTabActive(Tabs.labels) ? null : (
+          <EuiFlexItem grow={false}>
+            <EuiButton onClick={nextStep} disabled={!nextStepAvailable}>
+              Next step
+            </EuiButton>
+          </EuiFlexItem>
+        )}
+        {!isTabActive(Tabs.labels) ? null : (
+          <EuiFlexItem grow={false}>
+            <EuiButton
+              disabled={!validMetadata || !validFields || !validLabels}
+              onClick={() => handleSubmit()}
+            >
+              Submit
+            </EuiButton>
+          </EuiFlexItem>
+        )}
+      </EuiFlexGroup>
     </React.Fragment>
   );
 };

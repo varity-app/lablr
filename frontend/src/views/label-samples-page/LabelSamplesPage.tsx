@@ -143,7 +143,7 @@ const LabelSamplesPage: React.FC<IProps> = (props) => {
   };
 
   const saveAndContinue = () => {
-    if (sample === undefined) return;
+    if (sample === undefined || datasetPending || samplePending) return;
 
     const labels = options.reduce(
       (acc, option) => {
@@ -191,6 +191,8 @@ const LabelSamplesPage: React.FC<IProps> = (props) => {
     sample,
     options,
     numericalLabels,
+    samplePending,
+    datasetPending,
   ]);
 
   // Fetch dataset and latest sample on mount
@@ -314,41 +316,48 @@ const LabelSamplesPage: React.FC<IProps> = (props) => {
           ) : (
             dataset.labels
               .filter((label) => label.variant === "numerical")
-              .map((label) => (
-                <React.Fragment key={label.name}>
-                  <EuiTitle size="xxs">
-                    <h3>{label.name}</h3>
-                  </EuiTitle>
+              .map((label) => {
+                const levels: any[] = [];
 
-                  <EuiSpacer size="xs" />
-                  <EuiRange
-                    value={numericalLabels[label.name] || 0}
-                    min={label.minimum}
-                    max={label.maximum}
-                    step={label.interval}
-                    tickInterval={label.interval}
-                    showTicks
-                    onChange={(event: any) =>
-                      setNumericalLabels({
-                        ...numericalLabels,
-                        [label.name]: event.target.value,
-                      })
-                    }
-                    levels={[
-                      {
-                        min: Math.min(0, label.minimum),
-                        max: 0,
-                        color: "danger",
-                      },
-                      {
-                        min: 0,
-                        max: Math.max(0, label.maximum),
-                        color: "success",
-                      },
-                    ]}
-                  />
-                </React.Fragment>
-              ))
+                if (label.minimum !== undefined && label.minimum < 0)
+                  levels.push({
+                    min: Math.min(0, label.minimum),
+                    max: 0,
+                    color: "danger",
+                  });
+
+                if (label.maximum !== undefined && label.maximum > 0)
+                  levels.push({
+                    min: 0,
+                    max: Math.max(0, label.maximum),
+                    color: "success",
+                  });
+
+                return (
+                  <React.Fragment key={label.name}>
+                    <EuiTitle size="xxs">
+                      <h3>{label.name}</h3>
+                    </EuiTitle>
+
+                    <EuiSpacer size="xs" />
+                    <EuiRange
+                      value={numericalLabels[label.name] || 0}
+                      min={label.minimum}
+                      max={label.maximum}
+                      step={label.interval}
+                      tickInterval={label.interval}
+                      showTicks
+                      onChange={(event: any) =>
+                        setNumericalLabels({
+                          ...numericalLabels,
+                          [label.name]: event.target.value,
+                        })
+                      }
+                      levels={levels}
+                    />
+                  </React.Fragment>
+                );
+              })
           )}
         </EuiFlexItem>
       </EuiFlexGroup>

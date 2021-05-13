@@ -5,13 +5,7 @@ export interface FormValues {
   id_field: string;
   text_field: string;
 
-  labels: {
-    name: string;
-    variant: string;
-    minimum?: number;
-    maximum?: number;
-    interval?: number;
-  }[];
+  labels: LabelDefinition[];
 }
 
 export interface FormErrors {
@@ -20,4 +14,12 @@ export interface FormErrors {
 
 export interface FormTouched {
   [fields: string]: boolean | boolean[];
+}
+
+export interface LabelDefinition {
+  name: string;
+  variant: "boolean" | "numerical";
+  interval?: number;
+  minimum?: number;
+  maximum?: number;
 }

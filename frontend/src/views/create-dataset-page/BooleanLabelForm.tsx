@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useFormik } from "formik";
 
 import {
   EuiPopover,
@@ -10,12 +11,56 @@ import {
   EuiFormRow,
 } from "@elastic/eui";
 
-interface IProps {}
+import { FormErrors, LabelDefinition } from "./types";
+
+interface IProps {
+  handleLabel: (label: LabelDefinition) => void;
+  labels: LabelDefinition[];
+}
+
+interface FormValues {
+  name: string;
+  variant: "boolean";
+}
 
 const BooleanLabelForm: React.FC<IProps> = (props) => {
-  const {} = props;
+  const { handleLabel, labels } = props;
 
   const [boolPopOpen, setBoolPopOpen] = useState(false);
+
+  const validate = (values: FormValues) => {
+    const errors: FormErrors = {};
+    if (!values.name) {
+      errors.name = "Required";
+    } else if (
+      labels.reduce((acc, label) => {
+        return acc || label.name === values.name;
+      }, false)
+    ) {
+      errors.name = "Already a label with that name";
+    }
+
+    return errors;
+  };
+
+  const {
+    handleSubmit,
+    handleChange,
+    handleBlur,
+    touched,
+    values, // use this if you want controlled components
+    errors,
+  } = useFormik({
+    initialValues: {
+      name: "",
+      variant: "boolean",
+    },
+    validate,
+    onSubmit: (values, { resetForm }) => {
+      handleLabel(values as any);
+      resetForm();
+    },
+  });
 
   return (
     <EuiPopover
@@ -34,17 +79,31 @@ const BooleanLabelForm: React.FC<IProps> = (props) => {
       closePopover={() => setBoolPopOpen(false)}
     >
       <div style={{ width: 300 }}>
-        <EuiForm component="form">
+        <EuiForm component="form" onSubmit={handleSubmit}>
           <EuiFlexGroup>
             <EuiFlexItem>
-              <EuiFormRow label="Name">
-                <EuiFieldText />
+              <EuiFormRow
+                label="Name"
+                isInvalid={errors.name && touched.name ? true : false}
+              >
+                <EuiFieldText
+                  name="name"
+                  value={values.name}
+                  isInvalid={errors.name && touched.name ? true : false}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                />
               </EuiFormRow>
             </EuiFlexItem>
 
             <EuiFlexItem grow={false}>
               <EuiFormRow hasEmptyLabelSpace>
-                <EuiButton>Add</EuiButton>
+                <EuiButton
+                  disabled={!!errors.name}
+                  onClick={() => handleSubmit()}
+                >
+                  Add
+                </EuiButton>
               </EuiFormRow>
             </EuiFlexItem>
           </EuiFlexGroup>

@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
 import { API_PREFIX } from "config";
-import { DatasetDetailed } from "./types";
+import { DatasetDetailed, DatasetCreate } from "./types";
 
 interface State {
   data?: DatasetDetailed;
@@ -22,6 +22,13 @@ export const deleteDataset = createAsyncThunk(
   async (datasetID: string) => {
     await axios.delete(`${API_PREFIX}/datasets/${datasetID}`);
     return {};
+  }
+);
+
+export const createDataset = createAsyncThunk(
+  "/datasets/createDataset",
+  async (body: DatasetCreate) => {
+    await axios.post(`${API_PREFIX}/datasets`, body);
   }
 );
 
@@ -53,6 +60,18 @@ const datasetSlice = createSlice<State, {}, "datasets">({
       state.pending = false;
     });
     builder.addCase(deleteDataset.rejected, (state, { payload }) => {
+      state.pending = false;
+      console.log(payload);
+    });
+
+    // Create Dataset
+    builder.addCase(createDataset.pending, (state) => {
+      state.pending = true;
+    });
+    builder.addCase(createDataset.fulfilled, (state, action) => {
+      state.pending = false;
+    });
+    builder.addCase(createDataset.rejected, (state, { payload }) => {
       state.pending = false;
       console.log(payload);
     });
