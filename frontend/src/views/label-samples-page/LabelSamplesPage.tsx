@@ -2,6 +2,7 @@ import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { useParams, useHistory, Prompt } from "react-router-dom";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useSelector } from "react-redux";
+import { unwrapResult } from "@reduxjs/toolkit";
 
 import {
   EuiBreadcrumb,
@@ -30,6 +31,7 @@ import {
   labelSample,
   resetHistory,
 } from "state/samples/sample";
+import { addToast } from "state/toasts/toasts";
 
 import BottomBar from "./BottomBar";
 
@@ -153,26 +155,37 @@ const LabelSamplesPage: React.FC<IProps> = (props) => {
       { ...numericalLabels }
     );
 
-    if (historyIdx === 0) {
+    const callback = () =>
       dispatch(
-        labelSample({ datasetID, sampleID: sample.sample_id, labels })
-      ).then(() => {
-        dispatch(
-          fetchLatestSample({
-            datasetID,
-            offset: metadata === undefined ? 0 : metadata.pagination.offset,
-          })
-        );
-      });
+        addToast({
+          title: `Saved label for sample #${sample.original_id}`,
+          color: "success",
+          iconType: "check",
+        })
+      );
+
+    if (historyIdx === 0) {
+      dispatch(labelSample({ datasetID, sampleID: sample.sample_id, labels }))
+        .then(unwrapResult)
+        .then(() => {
+          callback();
+          dispatch(
+            fetchLatestSample({
+              datasetID,
+              offset: metadata === undefined ? 0 : metadata.pagination.offset,
+            })
+          );
+        });
     } else {
       setHistoryIdx(historyIdx - 1);
-      dispatch(
-        labelSample({ datasetID, sampleID: sample.sample_id, labels })
-      ).then(() => {
-        dispatch(
-          fetchSample({ datasetID, sampleID: sampleHistory[historyIdx - 1] })
-        );
-      });
+      dispatch(labelSample({ datasetID, sampleID: sample.sample_id, labels }))
+        .then(unwrapResult)
+        .then(() => {
+          callback();
+          dispatch(
+            fetchSample({ datasetID, sampleID: sampleHistory[historyIdx - 1] })
+          );
+        });
     }
   };
 

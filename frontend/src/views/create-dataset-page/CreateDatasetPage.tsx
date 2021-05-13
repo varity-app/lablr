@@ -21,6 +21,7 @@ import {
 import { useAppDispatch, RootState } from "state";
 import { createDataset } from "state/datasets/dataset";
 import { createSamples } from "state/samples/sample";
+import { addToast } from "state/toasts/toasts";
 
 import { FormValues, FormErrors, FormTouched } from "./types";
 import MetadataTab from "./MetadataTab";
@@ -145,7 +146,16 @@ const CreateDatasetPage: React.FC<IProps> = (props) => {
             })
           )
             .then(unwrapResult)
-            .then(() => history.push("/datasets"));
+            .then(() => {
+              dispatch(
+                addToast({
+                  title: `Created dataset #${dataset.dataset_id}`,
+                  color: "success",
+                  iconType: "check",
+                })
+              );
+              history.push(`/datasets/${dataset.dataset_id}`);
+            });
         });
     },
   });

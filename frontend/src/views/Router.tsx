@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { BrowserRouter, Switch, Route, Redirect } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 import {
   EuiBreadcrumb,
@@ -7,7 +8,12 @@ import {
   EuiPageBody,
   EuiPageContent,
   EuiPageContentBody,
+  EuiGlobalToastList,
 } from "@elastic/eui";
+
+import { useAppDispatch, RootState } from "state";
+
+import { removeToast } from "state/toasts/toasts";
 
 import ViewDatasetsPage from "./view-datasets-page/ViewDatasetsPage";
 import ViewDatasetPage from "./view-dataset-page/ViewDatasetPage";
@@ -19,6 +25,14 @@ import Header from "./components/Header";
 const Router: React.FC = () => {
   const [breadcrumbs, setBreadcrumbs] = useState<EuiBreadcrumb[]>([]);
   const [rightHeader, setRightHeader] = useState<JSX.Element[]>([]);
+
+  const dispatch = useAppDispatch();
+
+  const { data: toasts } = useSelector((state: RootState) => state.toasts);
+
+  const dismissToast = (toast: any) => {
+    dispatch(removeToast(toast.id));
+  };
 
   return (
     <BrowserRouter>
@@ -75,6 +89,11 @@ const Router: React.FC = () => {
             </EuiPageContentBody>
           </EuiPageContent>
         </EuiPageBody>
+        <EuiGlobalToastList
+          toasts={toasts}
+          dismissToast={dismissToast}
+          toastLifeTimeMs={1500}
+        />
       </EuiPage>
     </BrowserRouter>
   );
