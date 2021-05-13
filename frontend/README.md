@@ -1,10 +1,14 @@
-# Getting Started with Create React App
+# Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+The frontend is built TypeScript + React + Redux (Toolkit), as well as the Elastic UI design library.  EUI was chosen because of it's stunning visuals, extensive component library, and data-dense oriented design.
 
 ## Available Scripts
 
 In the project directory, you can run:
+
+### `npm run format`
+
+Automatically formats the application code to adhere to the [prettier](https://prettier.io/) TypeScript styling guide.
 
 ### `npm start`
 
