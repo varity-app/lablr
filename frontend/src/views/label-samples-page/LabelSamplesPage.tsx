@@ -275,7 +275,7 @@ const LabelSamplesPage: React.FC<IProps> = (props) => {
     <React.Fragment>
       <Prompt
         when={sampleHistory.length > 1}
-        message="Are you sure you want to leave the page?  You can come resume your labeling progress later."
+        message="Are you sure you want to leave the page?  You can resume your labeling progress later."
       />
       <EuiFlexGroup>
         <EuiFlexItem>
