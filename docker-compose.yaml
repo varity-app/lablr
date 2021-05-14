@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: cgundlach13/lablr:latest
+    image: cgundlach13/lablr:0.1.0
     ports:
       - "8000:80"
     volumes:
