@@ -31,7 +31,11 @@ The application state will be stored in the `~/.lablr` directory on the host mac
 
 Start with:
 ```bash
-$ docker-compose up
+# Pull the container if not already done
+docker-compose pull
+
+# Start the container
+docker-compose up
 ```
 
 The application should be running at [http://localhost:8000](http://localhost:8000).

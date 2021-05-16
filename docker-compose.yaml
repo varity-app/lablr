@@ -10,4 +10,4 @@ services:
     volumes:
       - type: bind
         source: ${HOME}/.lablr
-        target: /home/root/.lablr
+        target: /root/.lablr
